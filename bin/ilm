@@ -1,0 +1,102 @@
+#! /usr/bin/python
+from optparse import OptionParser, OptionValueError
+from types import FloatType
+import ilmpy
+import time
+import sys
+import numpy
+
+starttime = time.time()
+if __name__ == "__main__":
+    version = 0.1
+    prog = 'ilm'
+    usage = '''usage: %prog [options]
+
+Examples:
+%prog <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
+%prog [a-z]{8} 4{2}
+%prog [a-z]{8} 3{8}
+%prog [a-g]{3} 3.4.2
+%prog (a|A)[bc] 2{2}
+%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) 8.5.4
+%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) {1024}.2
+%prog ([a-z]/[aeiou]){4}.((aeiou|AEIOU):0.01).(bd|pt) {1024}.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
+'''
+    parser = OptionParser(usage=usage,version='{:<3s} version {:3.1f}'.format(prog,version))
+    parser.disable_interspersed_args()
+
+    ## parser.add_option("--method", dest="method", type="choice",
+    ##     	      choices=method_choices, default="association",
+    ##     	      help="learning method. Choose from %s" % method_choices)
+
+    parser.add_option("-t","--trials",
+		      dest="num_trials", type="int", default=1,
+		      help="set number of trials with ILM chains to simulate\n Default: %default")
+
+    parser.add_option("-g","--generations",
+		      dest="num_generations", type="int", default=50,
+		      help="set number of generations (chain length)\n Default: %default")
+
+    parser.add_option("-i","--interactions",
+		      dest="num_interactions", type="int", default=100,
+		      help="set number of teaching interactions (signal-meaning pairs) communicated from parent to child\n Default: %default")
+
+    parser.add_option("-a","--alpha",
+		      dest="alpha", type="float", default=1.0,
+		      help="set alpha \n Default: %default")
+
+    parser.add_option("-b","--beta",
+		      dest="beta", type="float", default=0.0,
+		      help="set beta\n Default: %default")
+
+    parser.add_option("-g","--gamma",
+		      dest="gamma", type="float", default=-1.0,
+		      help="set gamma\n Default: %default")
+
+    parser.add_option("-d","--delta",
+		      dest="delta", type="float", default=0.0,
+		      help="set delta\n Default: %default")
+
+    parser.add_option("-e","--noise",
+		      dest="noise", type="float", default=0.0,
+		      help="set base signal-noise rate.\n Default: %default")
+
+    parser.add_option("-c","--cost",
+		      dest="cost", type="float", default=0.0,
+		      help="set base misunderstanding cost function.\n Default: %default")
+
+    parser.add_option("-s","--seed", 
+		      dest="seed", type="int",  default=42,
+		      help="seed random number generator for amino acid coords. Default: %default")            
+
+    myargv = sys.argv
+    (options, args) = parser.parse_args()
+    if len(args) != 2:
+    	parser.error("expects two arguments")
+
+    ilmlexer = lex.lex(module=ilmlex)
+    ilmparser = yacc.yacc()
+    (signal_space,meaning_space) = ilmparser.parse(s,lexer=lexer)
+   
+
+    print '# {:<3s} version {:3.1f}'.format(prog,version)
+    print '# Copyleft (2016) David H. Ardell.'
+    print '# All Wrongs Reversed.'
+    print '#'
+    print '# Please cite Ardell and Winter (2016) in published works using this software.'
+    print '#'
+    print '# execution command:'
+    print '# '+' '.join(myargv)
+
+    for trial in xrange(num_trials):
+        founder = AssociationMatrixLearner(signal-space, meaning-space, alpha, beta, gamma, delta)
+        founder.initialize_randomly()
+        parent = founder
+        for schoolday in xrange(num_generations):
+            child = AssociationMatrixLearner(signal-space, meaning-space, alpha, beta, gamma, delta)
+            child.learn(parent.teach(num_interactions))
+            parent = child
+
+        
+print "# Run time (minutes): ",round((time.time()-starttime)/60,3)
+                    
