@@ -24,9 +24,13 @@ class TransformSoundSpace (_SoundSpace):
     """
     def __init__(self, shortsounds, longsounds, noiserate = 0):
         _SoundSpace.__init__(self, noiserate)
+        if (len(shortsounds) != len(longsounds)):
+            raise ValueError("Arguments to initialize TransformSoundSpace must be of equal length. You passed %s and %s" % (shortsounds,longsounds))
         self.shortsounds = shortsounds
         self.longsounds  = longsounds
-        self.translation_table = string.maketrans(shortsounds,longsounds)
+        shortlong = shortsounds + longsounds
+        longshort = longsounds + shortsounds
+        self.translation_table = string.maketrans(shortlong,longshort)
         self.sounds = set(shortsounds) | set (longsounds)
 
     def generalize(self, sound):
@@ -51,15 +55,31 @@ class WordSignalSpace (_SignalSpace):
     The probability of no change of a symbol is defined as (1 - nu).
 
     >>> signal_space = WordSignalSpace(nu = 0.1)
-
+    >>> sounds1      = SoundSpace(set('bp'))
+    >>> sounds2      = SoundSpace(set('aeiou'))
+    >>> sounds3      = SoundSpace(set('dt'))
+    >>> signal_space.add_component(sounds1)
+    >>> signal_space.add_component(sounds2)
+    >>> signal_space.add_component(sounds3)
+    >>> set(signal_space.analyze('bad'))
+    set(['b*d', 'b**', 'bad', '*a*', '*ad', '**d', 'ba*'])
+    >>> sounds4      = TransformSoundSpace('ae','AE')
+    >>> signal_space.add_component(sounds4)
+    >>> set(signal_space.analyze('bada'))
+    set(['*a*a', '*a*A', 'bada', '***a', '**da', '*ada', 'b**a', 'ba*A', '*adA', 'badA', 'ba*a', '**dA', 'b**A', 'b*dA', 'b*da'])
+    >>> set(signal_space.analyze('badA'))
+    set(['*a*A', '*a*a', 'badA', '***A', '**dA', '*adA', 'b**A', 'ba*a', '**da', '*ada', 'bada', 'ba*A', 'b**a', 'b*da', 'b*dA'])
+    
     """
     def __init__(self, nu = 0):
         _SignalSpace.__init__(self)
         self.nu = nu
         self.components = []
+        self.component_added = False
         
     def add_component(self,component):
         self.components.append(component)
+        self.component_added = True
 
     def generalize(self,register,sound):
         return self.components[register].generalize(sound)
@@ -75,15 +95,15 @@ class WordSignalSpace (_SignalSpace):
                     yield ''.join(chars)
 
     def signals(self):
-        if self.signals is None:
+        if self.signals is None or self.component_added:
             symbols = []
             for component in self.components:
                 symbols.append(component.sounds)
                 self.signals = itertools.product(symbols)
+            self.component_added = False
         return self.signals
         
 
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    
