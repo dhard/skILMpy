@@ -2,13 +2,15 @@ import ply.lex as lex
 import ply.yacc as yacc
 import os
 import ilmpy
+import signal_spaces
+import meaning_spaces
 
 class ILMParser:
     """
     Base class for a lexer/parser that has the rules defined as methods
 
     >>> p = ILMParser()
-    >>> args = '([a-z]\[aeiou]).[aeiou] 8.2'
+    >>> args = '([a-z]\[aeiou]).[aeiou] 8.2^2'
     >>> (signal_space,meaning_space) = p.yacc.parse(args)  
     """
 
@@ -47,6 +49,7 @@ class ILMParser:
         'FLOAT',
         'PIPE',
         'SPACE',
+        'HAT',
         )
     #    'COMMA'
 
@@ -63,6 +66,7 @@ class ILMParser:
     t_RPAREN    = r'\)'
     t_COLON     = r':'
     t_PIPE      = r'\|'
+    t_HAT       = r'\^'
     #t_COMMA     = r','
 
     def t_FLOAT(self,t):
@@ -94,13 +98,15 @@ class ILMParser:
 
 
     #%prog <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
-    #%prog [a-z]{8} 4{2}
-    #%prog [a-z]{8} 3{8}
-    #%prog [a-g]{3} 3.4.2
-    #%prog (a|A)[bc] 2{2}
-    #%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) 8.5.8
-    #%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) {1024}.2
-    #%prog ([a-z]/[aeiou]){4}.((aeiou|AEIOU):0.01).(bd|pt) {1024}.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
+    # signals are strings, meanings are vectors of numbers or tuples of numbers and grah 
+
+    #%prog [a-z]^8 4^2 # small lattices
+    #%prog [a-z]^8 3^8
+    #%prog [a-g]^3 3.4.2
+    #%prog (a|A)[bc] 2^2 # generalizable transformations
+    #%prog ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) 8.5.8 # set-complements
+    #%prog ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) {1024}.2
+    #%prog ([a-z]/[aeiou])^4.((aeiou|AEIOU):0.01).(bd|pt) {1024}^3.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
 
     # arguments        : signal-space meaning-space
 
@@ -142,18 +148,30 @@ class ILMParser:
         p[3].add_component(p[1])
         p[0] = p[3]
 
-    def p_meaning_component(self,p):
+    def p_meaning_space_power_dot(self,p):
+        'meaning-space : meaning-component HAT INTEGER DOT meaning-space'
+        for i in range(p[3]):
+            p[5].add_component(p[1])
+        p[0] = p[5]
+
+    def p_meaning_space_power(self,p):
+        'meaning-space : meaning-component HAT INTEGER'
+        p[0] = meaning_spaces.CombinatorialMeaningSpace()
+        for i in range(p[3]):
+            p[0].add_component(p[1])
+
+    def p_meaning_space(self,p):
         'meaning-space : meaning-component'
-        p[0] = ilmpy.meaning_spaces.CombinatorialMeaningSpace()
+        p[0] = meaning_spaces.CombinatorialMeaningSpace()
         p[0].add_component(p[1])
 
     def p_meaning_component_integer(self,p):
         'meaning-component : INTEGER'
-        p[0] = ilmpy.meaning_spaces.OrderedMeaningComponent(p[1])
+        p[0] = meaning_spaces.OrderedMeaningComponent(p[1])
 
     def p_meaning_component_set(self,p):
         'meaning-component : LBRACE INTEGER RBRACE'
-        p[0] = ilmpy.meaning_spaces.UnorderedMeaningComponent(p[2])
+        p[0] = meaning_spaces.UnorderedMeaningComponent(p[2])
 
     def p_signal_space_dot(self,p):
         'signal-space : signal-component DOT signal-space'
@@ -162,18 +180,18 @@ class ILMParser:
 
     def p_signal_space(self,p):
         'signal-space : signal-component'
-        p[0] = ilmpy.signal_spaces.WordSignalSpace()
+        p[0] = signal_spaces.WordSignalSpace()
         p[0].add_component(p[1])
 
     def p_signal_space_power_dot(self,p):
-        'signal-space : signal-component LBRACE INTEGER RBRACE DOT signal-space'
+        'signal-space : signal-component HAT INTEGER DOT signal-space'
         for i in range(p[3]):
-            p[6].add_component(p[1])
-        p[0] = p[6]
+            p[5].add_component(p[1])
+        p[0] = p[5]
 
     def p_signal_space_power(self,p):
-        'signal-space : signal-component LBRACE INTEGER RBRACE'
-        p[0] = ilmpy.signal_spaces.WordSignalSpace()
+        'signal-space : signal-component HAT INTEGER'
+        p[0] = signal_spaces.WordSignalSpace()
         for i in range(p[3]):
             p[0].add_component(p[1])
 
@@ -188,15 +206,15 @@ class ILMParser:
 
     def p_sound_space_transform(self,p):
         'sound-space :  LPAREN ALPHASTRING PIPE ALPHASTRING RPAREN'
-        p[0] = ilmpy.signal_spaces.TransformSoundSpace( p[2], p[4])
+        p[0] = signal_spaces.TransformSoundSpace( p[2], p[4])
 
     def p_sound_space_difference(self,p):
         'sound-space : LPAREN char-set BACKSLASH char-set RPAREN'
-        p[0] = ilmpy.signal_spaces.SoundSpace( p[2] - p[4] )
+        p[0] = signal_spaces.SoundSpace( p[2] - p[4] )
 
     def p_sound_space_char_set(self,p):
         'sound-space : char-set'
-        p[0] = ilmpy.signal_spaces.SoundSpace( p[1] )
+        p[0] = signal_spaces.SoundSpace( p[1] )
 
     def p_char_set_string(self,p):
         'char-set : LSQUARE ALPHASTRING RSQUARE'
