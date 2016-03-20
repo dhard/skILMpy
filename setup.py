@@ -16,12 +16,6 @@ setup(
         'hello': ['*.msg'],
     },
 
-    entry_points = {
-        'console_scripts': [
-            'ilm = ilmpy.__main__:main',
-        ]
-    },
-    
     # metadata for upload to PyPI
     author = "David H. Ardell",
     author_email = "dardell@ucmerced.edu",

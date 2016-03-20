@@ -1,12 +1,8 @@
-"""
-Control and select output from CMCpy simulations
-"""
-
-import numpy
+import ilmpy
 
 class Observables():
     """
-
+    
     """
     def __init__(self, show_codes = True, show_messages = False, show_initial_parameters = True, show_matrix_parameters = False, show_fitness_statistics = False, show_code_evolution_statistics = False, show_frozen_results_only = False, print_precision = 6, show_all = False):
         self.show_initial_parameters = show_initial_parameters

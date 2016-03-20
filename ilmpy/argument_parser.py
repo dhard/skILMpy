@@ -5,13 +5,13 @@ import ilmpy
 import signal_spaces
 import meaning_spaces
 
-class ILMParser:
+class ILM_Parser:
     """
     Base class for a lexer/parser that has the rules defined as methods
 
-    >>> p = ILMParser()
+    >>> p = ILM_Pparser()
     >>> args = '([a-z]\[aeiou]).[aeiou] 8.2^2'
-    >>> (signal_space,meaning_space) = p.yacc.parse(args)  
+    >>> (signal_space,meaning_space) = p.parse(args)  
     """
 
     def __init__(self, **kw):
@@ -21,16 +21,19 @@ class ILMParser:
             modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.__class__.__name__
         except:
             modname = "parser"+"_"+self.__class__.__name__
-        self.debugfile = modname + ".dbg"
+            #        self.debugfile = modname + ".dbg"
         self.tabmodule = modname + "_" + "parsetab"
         #print self.debugfile, self.tabmodule
 
         # Build the lexer and parser
-        lex.lex(module=self, debug=self.debug)
+        lex.lex(module=self) #, debug=self.debug)
         self.yacc = yacc.yacc(module=self,
-                              debug=self.debug,
-                              debugfile=self.debugfile,
+                             # debug=self.debug,
+                             # debugfile=self.debugfile,
                               tabmodule=self.tabmodule)
+        
+    def parse(self, args):
+        return self.yacc.parse(args)
         
     tokens = (
         'LPAREN',
@@ -137,6 +140,7 @@ class ILMParser:
 
     precedence = (
         ('right', 'DOT'),
+        ('right', 'COLON'),
     )
 
     def p_arguments(self,p):
@@ -198,7 +202,7 @@ class ILMParser:
     def p_signal_component_noise(self,p):
         'signal-component : LPAREN sound-space COLON noise-rate RPAREN'
         p[0] = p[2]
-        p[0].noise_rate = p[4]
+        p[0].noise_rate(p[4])
 
     def p_signal_component(self,p):
         'signal-component : sound-space'
@@ -238,7 +242,7 @@ class ILMParser:
 
     # Error rule for syntax errors
     def p_error(self,p):
-        print("Syntax error in input!")
+        raise ValueError
 
 if __name__ == "__main__":
     import doctest

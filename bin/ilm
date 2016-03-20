@@ -2,25 +2,32 @@
 from optparse import OptionParser, OptionValueError
 from types import FloatType
 import ilmpy
+from ilmpy.argument_parser import ILM_Parser
 import time
 import sys
 import numpy
+import pdb
 
 starttime = time.time()
 if __name__ == "__main__":
     version = 0.1
     prog = 'ilm'
-    usage = '''usage: %prog [options]
+    usage = '''usage: %prog [options] <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
+
+Iterated Learning Models in Python (ILMpy) version 0.1
+Copyright (2016) David H. Ardell
+All Wrongs Reversed.
+Please cite Ardell and Winter (2016) in published works using this software.
 
 Examples:
-%prog <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
-%prog [a-z]{8} 4{2}
-%prog [a-z]{8} 3{8}
-%prog [a-g]{3} 3.4.2
-%prog (a|A)[bc] 2{2}
-%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) 8.5.4
-%prog ([a-z]/[aeiou]){4}.(aeiou|AEIOU).(bd|pt) {1024}.2
-%prog ([a-z]/[aeiou]){4}.((aeiou|AEIOU):0.01).(bd|pt) {1024}.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
+ilm <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
+ilm [a-z]{8} 4^2
+ilm [a-z]{8} 3^8
+ilm [a-g]{3} 3.4.2
+ilm (a|A)[bc] 2^2
+ilm ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) 8.5.4
+ilm ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) {1024}.2
+ilm ([a-z]/[aeiou])^4.((aeiou|AEIOU):0.01).(bd|pt) {1024}.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
 '''
     parser = OptionParser(usage=usage,version='{:<3s} version {:3.1f}'.format(prog,version))
     parser.disable_interspersed_args()
@@ -29,15 +36,15 @@ Examples:
     ##     	      choices=method_choices, default="association",
     ##     	      help="learning method. Choose from %s" % method_choices)
 
-    parser.add_option("-t","--trials",
+    parser.add_option("-T","--trials",
 		      dest="num_trials", type="int", default=1,
 		      help="set number of trials with ILM chains to simulate\n Default: %default")
 
-    parser.add_option("-g","--generations",
+    parser.add_option("-G","--generations",
 		      dest="num_generations", type="int", default=50,
 		      help="set number of generations (chain length)\n Default: %default")
 
-    parser.add_option("-i","--interactions",
+    parser.add_option("-I","--interactions",
 		      dest="num_interactions", type="int", default=100,
 		      help="set number of teaching interactions (signal-meaning pairs) communicated from parent to child\n Default: %default")
 
@@ -66,21 +73,62 @@ Examples:
 		      help="set base misunderstanding cost function.\n Default: %default")
 
     parser.add_option("-s","--seed", 
-		      dest="seed", type="int",  default=42,
-		      help="seed random number generator for amino acid coords. Default: %default")            
+		      dest="seed", type="int",  default=None,
+		      help="seed random number generator. Default: %default")            
+
+    parser.add_option("-A","--amplitude", 
+		      dest="amplitude", type="float",  default=None,
+		      help="Initialize agents with uniformly distributed association strengths. Range of values is 2x amplitude, centered on zero. Default: %default")     
+
+    parser.set_defaults(show_matrices=False, show_lessons=False, show_vocabulary=False, show_final_vocabulary = False)
+    parser.add_option("--show-matrices", action="store_true", dest="show_messages", help="print internal message-signal matrices at each iteration")
+    parser.add_option("--show-lessons", action="store_true", dest="show_lessons", help="print the lessons passed to new agents at each iteration")
+    parser.add_option("--show-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at each iteration")
+    parser.add_option("--show-final-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at the end of each chain")
+    parser.add_option("--show-compositionality", action="store_true", dest="show_compositionality", help="print compositionality at each iteration")
+    parser.add_option("--show-accuracy", action="store_true", dest="show_accuracy", help="print communicative accuracy at each iteration")
+    parser.add_option("--show-load", action="store_true", dest="show_load", help="print functional load by signal position at each iteration")
+    parser.add_option("--show-stats", action="store_true", dest="show_stats", help="print all statistics at each iteration")
+
+
+    parser.add_option("--precision",
+		      dest="precision", type="int",  default=4,
+		      help="set print precision for parameter printing. Default: %default")
 
     myargv = sys.argv
     (options, args) = parser.parse_args()
     if len(args) != 2:
     	parser.error("expects two arguments")
 
-    ilmlexer = lex.lex(module=ilmlex)
-    ilmparser = yacc.yacc()
-    (signal_space,meaning_space) = ilmparser.parse(s,lexer=lexer)
-   
+    arg_string = '{} {}'.format(*args)
+    ilm_parser = ILM_Parser()
+    try:
+        (signal_space,meaning_space) = ilm_parser.parse(arg_string)
+    except ValueError:
+        print '\n'
+        print usage
+        print '\nSYNTAX ERROR invalid arguments to ilm: {}\n'.format(arg_string)
+        sys.exit(0)
+
+    program_args = [signal_space, meaning_space, alpha, beta, gamma, delta]
+    program_kwargs = []
+
+    if seed is not None:
+        program_kwargs.append('seed={}'.format(seed))
+
+  parser.add_option("--show-matrices", action="store_true", dest="show_messages", help="print internal message-signal matrices at each iteration")
+    parser.add_option("--show-lessons", action="store_true", dest="show_lessons", help="print the lessons passed to new agents at each iteration")
+    parser.add_option("--show-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at each iteration")
+    parser.add_option("--show-final-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at the end of each chain")
+    parser.add_option("--show-compositionality", action="store_true", dest="show_compositionality", help="print compositionality at each iteration")
+    parser.add_option("--show-accuracy", action="store_true", dest="show_accuracy", help="print communicative accuracy at each iteration")
+    parser.add_option("--show-load", action="store_true", dest="show_load", help="print functional load by signal position at each iteration")
+    parser.add_option("--show-stats", action="store_true", dest="show_stats", help="print all statistics at each iteration")
+`    if amplitude is not None:
+        program_kwargs.append('amplitude={}'.format(amplitude))
 
     print '# {:<3s} version {:3.1f}'.format(prog,version)
-    print '# Copyleft (2016) David H. Ardell.'
+    print '# Copyright (2016) David H. Ardell.'
     print '# All Wrongs Reversed.'
     print '#'
     print '# Please cite Ardell and Winter (2016) in published works using this software.'
@@ -88,13 +136,24 @@ Examples:
     print '# execution command:'
     print '# '+' '.join(myargv)
 
+    observables = ilmpy.observables.Observables(show_matrices                  = options.show_matrices,
+                                                show_lessons                   = options.show_lessons,
+                                                show_vocabulary                = options.show_vocabulary,
+                                                show_final_vocabulary          = options.show_final_vocabulary,
+                                                show-compositionality          = options.show_compositionality,
+                                                show-accuracy                  = options.show_accuracy,
+                                                show_load                      = options.show_load,
+                                                show_stats                     = options.show_stats,
+                                                print_precision                = options.precision)
+                                                )
+  
     for trial in xrange(num_trials):
-        founder = AssociationMatrixLearner(signal-space, meaning-space, alpha, beta, gamma, delta)
-        founder.initialize_randomly()
+        founder = AssociationMatrixLearner(*args,**kwargs)
         parent = founder
         for schoolday in xrange(num_generations):
-            child = AssociationMatrixLearner(signal-space, meaning-space, alpha, beta, gamma, delta)
-            child.learn(parent.teach(num_interactions))
+            child = AssociationMatrixLearner(*args)
+            lessons = parent.teach(num_interactions)
+            child.learn(lessons)
             parent = child
 
         
