@@ -19,34 +19,30 @@ class ILM_Parser:
 
     >>> p = ILM_Parser(debug=1)
 
-#    >>> args = '[a-z]^2 4^2'                            # small lattices
-#    >>> (signal_space,meaning_space) = p.parse(args)
-
-#    >>> args = '[a-g]^3 {3}.4.2'                        # unordered (set-like) meaning-spaces 
-#    >>> (signal_space,meaning_space) = p.parse(args)
-
-    >>> args = '([b-d]:0.01).[aeiou] 3.4'            # noise-rates
+    >>> args = '[a-z]^2 (4)^2'                              # small lattices
     >>> (signal_space,meaning_space) = p.parse(args)
 
-#    >>> args = '([a-z]\[aeiou]).[aeiou] 8.2^2'
-#    >>> (signal_space,meaning_space) = p.parse(args)
+    >>> args = '[a-g]^3 {3}.(4).(2)'                        # unordered (set-like) meaning-spaces 
+    >>> (signal_space,meaning_space) = p.parse(args)
 
+    >>> args = '([b-d]:0.01).[aeiou] (3).(4)'               # noiserates
+    >>> (signal_space,meaning_space) = p.parse(args)
 
-#    >>> args = '(aeiou|AEIOU)^2 {2}^2'                  # generalizable transformations
-#    >>> (signal_space,meaning_space) = p.parse(args)
+    >>> args = '(([a-z]\[aeiou]):0.05).[aeiou] (4).(2)^2'   # noiserates can go any sound-space
+    >>> (signal_space,meaning_space) = p.parse(args)
 
+    >>> args = '(a|A).[bc] (2)^2'                           # generalizable transformation sound-space
+    >>> (signal_space,meaning_space) = p.parse(args)
 
-#    >>> args = '(a|A).[bc] 2^2' # generalizable transformations
-#    >>> (signal_space,meaning_space) = p.parse(args)
+    >>> args = '((aeiou|AEIOU):0.01)^2 {2}^2'               # transformation sound-space with noise
+    >>> (signal_space,meaning_space) = p.parse(args)
        
-#     >>> args = '([a-z]\[aeiou])^4.(aeiou|AEIOU).(bd|pt) 8.5.8' # set-complements
-#     >>> (signal_space,meaning_space) = p.parse(args)
+    >>> args = '([a-g]\[aeiou])^2.(aeiou|AEIOU).(bd|pt) (8).(5)' # set-complements
+    >>> (signal_space,meaning_space) = p.parse(args)
 
-#     >>> args = '([a-g]\[aeiou])^2.(ae|AE).(bd|pt) {256}.2'
-#     >>> (signal_space,meaning_space) = p.parse(args)
+    >>> args = '(([a-g]\[aeiou]):0.1)^2 {256}.(2)'            # with noise and powered
+    >>> (signal_space,meaning_space) = p.parse(args)
 
-#     >>> args = '([a-z]\[aeiou])^4.((aeiou|AEIOU):0.01).(bd|pt) {1024}^3'
-#     >>> (signal_space,meaning_space) = p.parse(args)
     """
 
     def __init__(self, **kw):
@@ -68,7 +64,7 @@ class ILM_Parser:
                               tabmodule=self.tabmodule)
         
     def parse(self, args):
-        return self.yacc.parse(args, debug=True)
+        return self.yacc.parse(args)#, debug=True)
         
     tokens = (
         'LPAREN',
@@ -161,7 +157,7 @@ class ILM_Parser:
     # meaning-space     : meaning-component HAT INTEGER  DOT meaning-space
     # meaning-space     : meaning-component HAT INTEGER 
     # meaning-space     : meaning-component 
-    # meaning-component : INTEGER
+    # meaning-component : LPAREN INTEGER RPAREN
     # meaning-component : LBRACE INTEGER RBRACE 
 
     precedence = (
@@ -241,13 +237,13 @@ class ILM_Parser:
         p[0] = p[1]
 
     def p_meaning_space_power_dot(self,p):
-        'meaning-space : meaning-component HAT INTEGER DOT meaning-space %prec MDOT'
+        'meaning-space : meaning-component HAT INTEGER DOT meaning-space'
         for i in range(p[3]):
             p[5].add_component(p[1])
         p[0] = p[5]
 
     def p_meaning_space_dot(self,p):
-        'meaning-space : meaning-component DOT meaning-space %prec MDOT'
+        'meaning-space : meaning-component DOT meaning-space'
         p[3].add_component(p[1])
         p[0] = p[3]
 
@@ -263,10 +259,9 @@ class ILM_Parser:
         p[0].add_component(p[1])
 
 
-
-    def p_meaning_component_integer(self,p):
-        'meaning-component : INTEGER'
-        p[0] = meaning_spaces.OrderedMeaningComponent(p[1])
+    def p_meaning_component_range(self,p):
+        'meaning-component : LPAREN INTEGER RPAREN'
+        p[0] = meaning_spaces.OrderedMeaningComponent(p[2])
 
     def p_meaning_component_set(self,p):
         'meaning-component : LBRACE INTEGER RBRACE'
