@@ -2,6 +2,7 @@ from __future__ import division
 import warnings
 import itertools
 import string
+import numpy
 from math import floor
 from random import sample
 from sympy.utilities.iterables import multiset_partitions as set_partitions
@@ -59,6 +60,8 @@ class OrderedMeaningComponent (_MeaningComponent):
         _MeaningComponent.__init__(self,size)
 
     def generalize(self, meaning):
+        if not str(meaning) in self._meanings:
+            raise ValueError('unknown meaning component {}'.format(meaning))
         return  ['*']
         
 class UnorderedMeaningComponent (_MeaningComponent):    
@@ -106,25 +109,30 @@ class CombinatorialMeaningSpace (_MeaningSpace):
     >>> meaning_space.add_component(meanings2)
     >>> meaning_space.add_component(meanings3)
 
-    >>> set(meaning_space.generalize('111'))
-    set(['*1*', '11*', '111', '*11'])
+    >>> set(meaning_space.generalize('1.1.1'))
+    set(['1.1.1', '*.1.*', '*.1.1', '1.1.*'])
 
-    >>> list(meaning_space.analyze('111',2))
-    [['*11', '11*'], ['*1*', '111'], ['*11', '11*']]
+    >>> list(meaning_space.analyze('1.1.1',2))
+    [['*.1.1', '1.1.*'], ['*.1.*', '1.1.1'], ['*.1.1', '1.1.*']]
 
-    >>> list(meaning_space.analyze('111',3))
-    [['*11', '111', '11*']]
+    >>> list(meaning_space.analyze('1.1.1',3))
+    [['*.1.1', '1.1.1', '1.1.*']]
 
     >>> meaning_space.meanings()
-    ['111', '110', '101', '100', '011', '010', '001', '000', '211', '210', '201', '200']
+    ['1.1.1', '1.1.0', '1.0.1', '1.0.0', '0.1.1', '0.1.0', '0.0.1', '0.0.0', '2.1.1', '2.1.0', '2.0.1', '2.0.0']
 
     >>> meaning_space.schemata()
-    ['111', '110', '11*', '101', '100', '10*', '011', '010', '01*', '001', '000', '00*', '211', '210', '21*', '201', '200', '20*', '*11', '*10', '*1*', '*01', '*00', '*0*']
+    ['1.1.1', '1.1.0', '1.1.*', '1.0.1', '1.0.0', '1.0.*', '0.1.1', '0.1.0', '0.1.*', '0.0.1', '0.0.0', '0.0.*', '2.1.1', '2.1.0', '2.1.*', '2.0.1', '2.0.0', '2.0.*', '*.1.1', '*.1.0', '*.1.*', '*.0.1', '*.0.0', '*.0.*']
 
     >>> meaning_space.sample(10)
 
     >>> meaning_space.hamming('100','011')
     1.0
+
+    >>> meanings4 = OrderedMeaningComponent(12)
+    >>> meaning_space.add_component(meanings4)
+    >>> set(meaning_space.generalize('1.1.1.14'))
+    ValueError
     
     """
     def __init__(self):
@@ -152,15 +160,15 @@ class CombinatorialMeaningSpace (_MeaningSpace):
         ## self._weights  = dict(zip(map(''.join,itertools.product(*keys)),map(sum,itertools.product(*weights))))
 
         if (self.length == 0):
-            self._meanings      = [ ''.join(m) for m in itertools.product(component.meanings()) ]
-            self._schemata      = [ ''.join(s) for s in itertools.product(component.schemata()) ]
-            self._weightkeys    = [ ''.join(k) for k in itertools.product(component.weights().keys()) ]
+            self._meanings      = [ '.'.join(m) for m in itertools.product(component.meanings()) ]
+            self._schemata      = [ '.'.join(s) for s in itertools.product(component.schemata()) ]
+            self._weightkeys    = [ '.'.join(k) for k in itertools.product(component.weights().keys()) ]
             self._weightvalues  = [     sum(v) for v in itertools.product(component.weights().values()) ]
             self._weights       = dict(zip(self._weightkeys,self._weightvalues))
         else:
-            self._meanings      = [ ''.join(m) for m in itertools.product(self._meanings,component.meanings()) ]
-            self._schemata      = [ ''.join(s) for s in itertools.product(self._schemata,component.schemata()) ]
-            self._weightkeys    = [ ''.join(k) for k in itertools.product(self._weightkeys,component.weights().keys()) ]
+            self._meanings      = [ '.'.join(m) for m in itertools.product(self._meanings,component.meanings()) ]
+            self._schemata      = [ '.'.join(s) for s in itertools.product(self._schemata,component.schemata()) ]
+            self._weightkeys    = [ '.'.join(k) for k in itertools.product(self._weightkeys,component.weights().keys()) ]
             self._weightvalues  = [     sum(v) for v in itertools.product(self._weightvalues,component.weights().values()) ]
             self._weights       = dict(zip(self._weightkeys,self._weightvalues))
 
@@ -183,36 +191,44 @@ class CombinatorialMeaningSpace (_MeaningSpace):
             None
 
     def hamming(self,mean1,mean2):
-        assert len(mean1) == len(mean2)
+        assert len(mean1.split('.')) == len(mean2.split('.'))
         if (mean1 == mean2):
             return 0
         elif mean1 in self._hamming and mean2 in self._hamming[mean1]:
             return self._hamming[mean1][mean2]
         else:
-            self._hamming[mean1][mean2] = self._hamming[mean2][mean1] = (hamming(mean1,mean2)/self.length)
+            marray1 = numpy.array(mean1.split('.'))
+            marray2 = numpy.array(mean2.split('.'))
+            hd = numpy.count_nonzero(marray1!=marray2)
+            self._hamming[mean1][mean2] = self._hamming[mean2][mean1] = (hd/self.length)
             return self._hamming[mean1][mean2]
 
-    def analyze(self,meaning, length):
-        mlist = list(meaning)
-        partitions = set_partitions(range(len(meaning)),length)
+    def analyze(self, meaning, length):
+        ## import pdb
+        ## pdb.set_trace()
+        mlist = meaning.split('.')
+        partitions = set_partitions(xrange(len(mlist)),length)
         for partition in partitions:
             analysis = []
             for iset in partition:
                 rlist = mlist[:]
                 for i in iset:
                     rlist[i] = self.components(i).generalize(rlist[i])[0]
-                analysis.append(''.join(rlist))    
+                analysis.append('.'.join(rlist))    
             yield analysis
 
     def generalize(self,meaning):
-        for i in range(len(meaning)):
-            for locs in itertools.combinations(range(len(meaning)), i):
-                meanings = [[component] for component in meaning]
+        #import pdb
+        #pdb.set_trace()
+        mlist = meaning.split('.')
+        for i in xrange(len(mlist)):
+            for locs in itertools.combinations(xrange(len(mlist)), i):
+                meanings = [[component] for component in mlist]
                 for loc in locs:
-                    original_meaning = meaning[loc]
+                    original_meaning = mlist[loc]
                     meanings[loc] = self.components(loc).generalize(original_meaning)
-                for chars in itertools.product(*meanings):
-                    schema = ''.join(chars)
+                for components in itertools.product(*meanings):
+                    schema = '.'.join(components)
                     yield schema 
     
     def sample(self,number):

@@ -246,17 +246,18 @@ class AssociationMatrixLearner (_Learner):
             for thought,utterance,freq in lessons:
                 distortions.extend([[thought, distortion, frequency] for distortion, frequency in self.signal_space.distort(utterance) ])
             if self.observables and self.observables.show_lessons:
-                print distortions
+                print "lessons: ",distortions
             return distortions
         else:
             if self.observables and self.observables.show_lessons:
-                print lessons
+                print "lessons: ",lessons
             return lessons
 
     def compute_compositionality(self):
         """
         Computes a compositionality measure related to the one introduced in Sella Ardell (2001) DIMACS
         """
+        #pdb.set_trace()
         compositionality = 0
         meanings = self.meaning_space.meanings()
         for meaning1,meaning2 in itertools.combinations(meanings, 2):
@@ -274,6 +275,7 @@ class AssociationMatrixLearner (_Learner):
         """
         Computes the Communicative Accuracy of self e.g. Brighton et al (2005) eq.A.1 
         """
+        #pdb.set_trace()
         accuracy = 0
         meanings = self.meaning_space.meanings()
         for meaning in meanings:
@@ -287,9 +289,10 @@ class AssociationMatrixLearner (_Learner):
 
     def compute_load(self):
         """
-        Calculates the functional load by position, the hamming distance of meanings induced by changes in each position
+        Calculates the functional load by signal position, the hamming distance of meanings induced by changes in each position
         """
-        load = [ 0 for _ in range(self.meaning_space.length) ]
+        #pdb.set_trace()
+        load = [ 0 for _ in range(self.signal_space.length) ]
         meanings = self.meaning_space.meanings()
         for position in xrange(self.signal_space.length):
             comparisons = 0
@@ -307,6 +310,13 @@ class AssociationMatrixLearner (_Learner):
         #pdb.set_trace()
         return load
 
+    def print_parameters(self):
+        params = {'alpha':self.alpha, 'beta':self.beta, 'gamma':self.gamma, 'delta':self.delta}#, 'interactions": }
+        precision = self.observables.print_precision
+        width = precision + 8
+        print "# params: ",'alpha: {alpha}  beta: {beta} gamma: {gamma} delta: {delta}'.format(**params)
+
+
     def print_observables_header(self):
         obs = []
         precision = self.observables.print_precision
@@ -318,7 +328,7 @@ class AssociationMatrixLearner (_Learner):
             print '# ACC = Communicative Self-Accuracy'
             obs.append('ACC')
         if self.observables.show_load or self.observables.show_stats:            
-            print '# FLD = Functional Load by Position'
+            print '# FLD = Functional Load by Signal Position, One for Each'
             obs.append('FLD')
         if obs:
             print ('{:>{width}s}'*(len(obs))).format(*obs,width=width)
@@ -339,7 +349,7 @@ class AssociationMatrixLearner (_Learner):
             obs.extend(self.compute_load())
 
         if obs:
-            print ('{:>{width}f}'*(len(obs))).format(*obs,width=width)
+            print "stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width)
 
 
 if __name__ == "__main__":

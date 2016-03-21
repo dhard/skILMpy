@@ -148,6 +148,7 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
         founder = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
         parent = founder
         if trial == 0:
+            parent.print_parameters()#options.num_interactions,options.num_generations)
             parent.print_observables_header()
         for generation in xrange(options.num_generations):
             print '# Trial {} Iteration {}'.format(trial,generation)

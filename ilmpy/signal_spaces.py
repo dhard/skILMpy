@@ -8,6 +8,7 @@ from distance import hamming
 from itertools import chain, combinations
 from collections import defaultdict
 from sympy.utilities.iterables import multiset_partitions as set_partitions
+import pdb
 
 class _SignalComponent():
     """
@@ -34,8 +35,10 @@ class _SignalComponent():
     ## This is the only mutable attribute
     def set_noiserate(self, noiserate):
         self._noiserate = noiserate
-
-
+        if (noiserate > 0):
+            self.noisy = True
+        else:
+            self.noisy = False
 
 class SignalComponent (_SignalComponent):
     """
@@ -50,6 +53,7 @@ class SignalComponent (_SignalComponent):
     ['i', 'e', 'u', 'o']
     >>> space.distort('u')
     ['a', 'i', 'e', 'o']
+    >>> space.generalize('f')
     """    
     def __init__(self, sounds, noiserate = 0):
         _SignalComponent.__init__(self, noiserate)
@@ -61,6 +65,8 @@ class SignalComponent (_SignalComponent):
         self._weights  = dict(zip((list(sounds)+list('*')),weights))
 
     def generalize(self, sound):
+        if not sound in self._sounds:
+            raise ValueError('unknown signal component {}'.format(sound))
         return ['*']
 
     def distort(self, sound):
@@ -106,6 +112,7 @@ class TransformSignalComponent (_SignalComponent):
         self._weights  = dict(zip((list(shortlong)+transform_wildcards),weights))
 
     def generalize(self, sound):
+        
         return [self._generalizations[sound]]
 
     def distort(self, sound):

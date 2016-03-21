@@ -46,7 +46,7 @@ class ILM_Parser:
     """
 
     def __init__(self, **kw):
-        self.debug = True
+        self.debug = False
         self.names = { }
         try:
             modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.__class__.__name__
