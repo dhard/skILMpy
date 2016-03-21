@@ -5,7 +5,8 @@ import string
 from math import floor
 from random import sample
 from sympy.utilities.iterables import multiset_partitions as set_partitions
-
+from distance import hamming
+from collections import defaultdict
 
 class _MeaningComponent():
     """
@@ -72,13 +73,16 @@ class UnorderedMeaningComponent (_MeaningComponent):
     >>> umc.meanings()
     set(['1', '0', '3', '2', '4'])
     >>> umc.schemata()
-    set(['1', '0', '3', '2', '4', '*'])
+    set(['1', '0', '3', '2', '4'])
     >>> umc.weights()
-    {'*': 0.0, '1': 1.0, '0': 1.0, '3': 1.0, '2': 1.0, '4': 1.0}
+    {'1': 1.0, '0': 1.0, '3': 1.0, '2': 1.0, '4': 1.0}
     """
     def __init__(self, size):
         _MeaningComponent.__init__(self,size)
-    
+        self._schemata = self._meanings.copy()
+        weights = list([1.0] * len(self._meanings))
+        self._weights  = dict(zip((list(self._meanings)),weights))        
+
     def generalize(self, meaning):
         return [meaning]; # the generalization identity 
 
@@ -115,34 +119,56 @@ class CombinatorialMeaningSpace (_MeaningSpace):
     ['111', '110', '101', '100', '011', '010', '001', '000', '211', '210', '201', '200']
 
     >>> meaning_space.schemata()
-    ['111', '110', '11*', '101', '100', '10*', '1*1', '1*0', '1**', '011', '010', '01*', '001', '000', '00*', '0*1', '0*0', '0**', '211', '210', '21*', '201', '200', '20*', '2*1', '2*0', '2**', '*11', '*10', '*1*', '*01', '*00', '*0*', '**1', '**0', '***']
+    ['111', '110', '11*', '101', '100', '10*', '011', '010', '01*', '001', '000', '00*', '211', '210', '21*', '201', '200', '20*', '*11', '*10', '*1*', '*01', '*00', '*0*']
 
     >>> meaning_space.sample(10)
 
+    >>> meaning_space.hamming('100','011')
+    1.0
     
     """
     def __init__(self):
         _MeaningSpace.__init__(self)
-        self.components = []
+        self._components = []
         self._weights = {}
+        self._hamming = defaultdict(dict)
         self.length = 0
 
     def add_component(self,component):
-        self.components.append(component)
-        self.length += 1
-        meanings = []
-        schemata = []
-        keys     = []
-        weights  = []
-        for component in self.components:
-            meanings.append(component.meanings())
-            schemata.append(component.schemata())
-            keys.append(component.weights().keys())
-            weights.append(component.weights().values())
+        ## self.components.append(component)
+        ## self.length += 1
+        ## meanings = []
+        ## schemata = []
+        ## keys     = []
+        ## weights  = []
+        ## for component in self.components:
+        ##     meanings.append(component.meanings())
+        ##     schemata.append(component.schemata())
+        ##     keys.append(component.weights().keys())
+        ##     weights.append(component.weights().values())
             
-        self._meanings = [''.join(s) for s in itertools.product(*meanings) ]
-        self._schemata = [''.join(s) for s in itertools.product(*schemata) ]
-        self._weights  = dict(zip(map(''.join,itertools.product(*keys)),map(sum,itertools.product(*weights))))
+        ## self._meanings = [''.join(s) for s in itertools.product(*meanings) ]
+        ## self._schemata = [''.join(s) for s in itertools.product(*schemata) ]
+        ## self._weights  = dict(zip(map(''.join,itertools.product(*keys)),map(sum,itertools.product(*weights))))
+
+        if (self.length == 0):
+            self._meanings      = [ ''.join(m) for m in itertools.product(component.meanings()) ]
+            self._schemata      = [ ''.join(s) for s in itertools.product(component.schemata()) ]
+            self._weightkeys    = [ ''.join(k) for k in itertools.product(component.weights().keys()) ]
+            self._weightvalues  = [     sum(v) for v in itertools.product(component.weights().values()) ]
+            self._weights       = dict(zip(self._weightkeys,self._weightvalues))
+        else:
+            self._meanings      = [ ''.join(m) for m in itertools.product(self._meanings,component.meanings()) ]
+            self._schemata      = [ ''.join(s) for s in itertools.product(self._schemata,component.schemata()) ]
+            self._weightkeys    = [ ''.join(k) for k in itertools.product(self._weightkeys,component.weights().keys()) ]
+            self._weightvalues  = [     sum(v) for v in itertools.product(self._weightvalues,component.weights().values()) ]
+            self._weights       = dict(zip(self._weightkeys,self._weightvalues))
+
+        self.length += 1
+        self._components.append(component)
+
+    def components(self,i):
+         return self._components[i]
 
     def meanings(self):
         return self._meanings
@@ -156,6 +182,16 @@ class CombinatorialMeaningSpace (_MeaningSpace):
         else:
             None
 
+    def hamming(self,mean1,mean2):
+        assert len(mean1) == len(mean2)
+        if (mean1 == mean2):
+            return 0
+        elif mean1 in self._hamming and mean2 in self._hamming[mean1]:
+            return self._hamming[mean1][mean2]
+        else:
+            self._hamming[mean1][mean2] = self._hamming[mean2][mean1] = (hamming(mean1,mean2)/self.length)
+            return self._hamming[mean1][mean2]
+
     def analyze(self,meaning, length):
         mlist = list(meaning)
         partitions = set_partitions(range(len(meaning)),length)
@@ -164,7 +200,7 @@ class CombinatorialMeaningSpace (_MeaningSpace):
             for iset in partition:
                 rlist = mlist[:]
                 for i in iset:
-                    rlist[i] = self.components[i].generalize(rlist[i])[0]
+                    rlist[i] = self.components(i).generalize(rlist[i])[0]
                 analysis.append(''.join(rlist))    
             yield analysis
 
@@ -174,7 +210,7 @@ class CombinatorialMeaningSpace (_MeaningSpace):
                 meanings = [[component] for component in meaning]
                 for loc in locs:
                     original_meaning = meaning[loc]
-                    meanings[loc] = self.components[loc].generalize(original_meaning)
+                    meanings[loc] = self.components(loc).generalize(original_meaning)
                 for chars in itertools.product(*meanings):
                     schema = ''.join(chars)
                     yield schema 

@@ -1,9 +1,11 @@
+from __future__ import division
 import warnings
 import pandas
 import numpy
 import pdb
 import signal_spaces,meaning_spaces
 import random
+import copy
 import itertools
 
 class _Learner ():
@@ -79,12 +81,11 @@ class AssociationMatrixLearner (_Learner):
     >>> founder = AssociationMatrixLearner(meaning_space,signal_space, alpha=1, beta=0, gamma=-1, delta=-1, seed=42, amplitude = 0.25)
     >>> lessons = founder.teach(20)
     >>> lessons
-    [[['001', 'pEd', 0.9], ['001', 'ped', 0.1]], [['111', 'bUd', 0.9], ['111', 'bud', 0.1]], [['131', 'pId', 0.9], ['131', 'pid', 0.1]], [['100', 'bad', 0.9], ['100', 'bAd', 0.1]], [['010', 'pEd', 0.9], ['010', 'ped', 0.1]], [['011', 'bUd', 0.9], ['011', 'bud', 0.1]], [['040', 'pEd', 0.9], ['040', 'ped', 0.1]], [['110', 'bet', 0.9], ['110', 'bEt', 0.1]], [['130', 'pAd', 0.9], ['130', 'pad', 0.1]], [['041', 'ped', 0.9], ['041', 'pEd', 0.1]], [['101', 'pAd', 0.9], ['101', 'pad', 0.1]], [['020', 'pud', 0.9], ['020', 'pUd', 0.1]], [['031', 'pAd', 0.9], ['031', 'pad', 0.1]], [['000', 'bad', 0.9], ['000', 'bAd', 0.1]], [['021', 'pEd', 0.9], ['021', 'ped', 0.1]], [['140', 'bUd', 0.9], ['140', 'bud', 0.1]], [['120', 'pid', 0.9], ['120', 'pId', 0.1]], [['121', 'bUd', 0.9], ['121', 'bud', 0.1]], [['141', 'bEt', 0.9], ['141', 'bet', 0.1]], [['030', 'bad', 0.9], ['030', 'bAd', 0.1]]]
+    [['001', 'pEd', 0.9], ['001', 'ped', 0.1], ['111', 'bUd', 0.9], ['111', 'bud', 0.1], ['131', 'pId', 0.9], ['131', 'pid', 0.1], ['100', 'bad', 0.9], ['100', 'bAd', 0.1], ['010', 'pEd', 0.9], ['010', 'ped', 0.1], ['011', 'bUd', 0.9], ['011', 'bud', 0.1], ['040', 'pEd', 0.9], ['040', 'ped', 0.1], ['110', 'bet', 0.9], ['110', 'bEt', 0.1], ['130', 'pAd', 0.9], ['130', 'pad', 0.1], ['041', 'ped', 0.9], ['041', 'pEd', 0.1], ['101', 'pAd', 0.9], ['101', 'pad', 0.1], ['020', 'pud', 0.9], ['020', 'pUd', 0.1], ['031', 'pAd', 0.9], ['031', 'pad', 0.1], ['000', 'bad', 0.9], ['000', 'bAd', 0.1], ['021', 'pEd', 0.9], ['021', 'ped', 0.1], ['140', 'bUd', 0.9], ['140', 'bud', 0.1], ['120', 'pid', 0.9], ['120', 'pId', 0.1], ['121', 'bUd', 0.9], ['121', 'bud', 0.1], ['141', 'bEt', 0.9], ['141', 'bet', 0.1], ['030', 'bad', 0.9], ['030', 'bAd', 0.1]]
     >>> child = founder.spawn()
     >>> child.learn(lessons)
     >>> child.speak('001')
-    'pod'
-
+    'pEd'
 
     """
     def __init__(self,meaning_space, signal_space, alpha=1, beta=-1, gamma=-1, delta=0, observables=None, seed=None, amplitude=None):
@@ -102,6 +103,9 @@ class AssociationMatrixLearner (_Learner):
         self.gamma = gamma
         self.delta = delta
         self.observables = observables
+        self._matrix_updated = False
+        self._speak = {}
+        self._hear = {}
 
     def spawn(self):
         child = AssociationMatrixLearner(self.meaning_space,self.signal_space,alpha=self.alpha,beta=self.beta,gamma=self.gamma,delta=self.delta, observables=self.observables)
@@ -121,7 +125,6 @@ class AssociationMatrixLearner (_Learner):
         """
         Learn associations from a list of signal-meaning pairs
         """
-        #        pdb.set_trace()
         for datum in data:
             meaning = datum[0]
             signal = datum[1]
@@ -137,60 +140,92 @@ class AssociationMatrixLearner (_Learner):
             for signal_schema in self.signal_space.generalize(signal):
                 for meaning_schema in self.meaning_space.generalize(meaning):
                     self.matrix.loc[meaning_schema,signal_schema] += ((self.alpha - self.beta - self.gamma + self.delta) * freq_weight)
- 
 
-    def hear (self, signal):
+        self._matrix_updated = True
+
+    def hear (self, signal, pick = True):
         """
         Return the optimal meaning for a signal
         """
-        meanings = self.meaning_space.meanings()
-        winners = []
-        maxscore = None
-        for analysis_size in xrange(2,(len(signal)+1)):
-            for signal_analysis in self.signal_space.analyze(signal,analysis_size):
-                for meaning in meanings:
-                    for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
-                        for permutation in itertools.permutations(meaning_analysis):
-                            pairs = zip(signal_analysis, permutation)
-                            score = 0
-                            for signal_schema,meaning_schema in pairs:
-                                score += self.score_meaning(meaning_schema,signal_schema)
-                            if (score > maxscore):
-                                maxscore = score
-                                winners = [meaning]
-                            elif (score == maxscore):
-                                winners.append(meaning)
-
-        if (len(winners) == 1):
-            return winners[0]
+        if self._matrix_updated or not signal in self._hear:
+            meanings = self.meaning_space.meanings()
+            winners = []
+            maxscore = None
+            for analysis_size in xrange(2,(len(signal)+1)):
+                for signal_analysis in self.signal_space.analyze(signal,analysis_size):
+                    for meaning in meanings:
+                        for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
+                            for permutation in itertools.permutations(meaning_analysis):
+                                pairs = zip(signal_analysis, permutation)
+                                score = 0
+                                for signal_schema,meaning_schema in pairs:
+                                    score += self.score_meaning(meaning_schema,signal_schema)
+                                if (score > maxscore):
+                                    maxscore = score
+                                    winners = [meaning]
+                                elif (score == maxscore):
+                                    winners.append(meaning)
+            if pick:
+                if (len(winners) == 1):
+                    winner = winners[0]
+                else:
+                    winner = random.choice(winners) 
+            else:
+                winner = winners
+                
+            self._matrix_updated = False
+            self._hear[signal] = winners
+            return winner
         else:
-            return random.choice(winners)        
+            if pick:
+                if (len(self._hear[signal]) == 1):
+                    return self._hear[signal][0]
+                else:
+                    return random.choice(self._hear[signal])         
+            else:
+                return self._hear[signal]
 
-    def speak (self, meaning):
+    def speak (self, meaning, pick = True):
         """
         Produce a signal corresponding to a meaning
         """
-        signals = self.signal_space.signals()
-        winners = []
-        maxscore = None
-        for analysis_size in xrange(2,(len(meaning)+1)):
-            for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
-                for signal in signals:
-                    for signal_analysis in self.signal_space.analyze(signal,analysis_size):
-                        for permutation in itertools.permutations(signal_analysis):
-                            pairs = zip(permutation,meaning_analysis)
-                            score = 0
-                            for signal_schema,meaning_schema in pairs:
-                                score += self.score_signal(meaning_schema,signal_schema)
-                            if (score > maxscore):
-                                maxscore = score
-                                winners = [signal]
-                            elif (score == maxscore):
-                                winners.append(signal)                          
-        if (len(winners) == 1):
-            return winners[0]
+        if self._matrix_updated or not meaning in self._speak:
+            signals = self.signal_space.signals()
+            winners = []
+            maxscore = None
+            for analysis_size in xrange(2,(len(meaning)+1)):
+                for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
+                    for signal in signals:
+                        for signal_analysis in self.signal_space.analyze(signal,analysis_size):
+                            for permutation in itertools.permutations(signal_analysis):
+                                pairs = zip(permutation,meaning_analysis)
+                                score = 0
+                                for signal_schema,meaning_schema in pairs:
+                                    score += self.score_signal(meaning_schema,signal_schema)
+                                if (score > maxscore):
+                                    maxscore = score
+                                    winners = [signal]
+                                elif (score == maxscore):
+                                    winners.append(signal)                          
+            if pick:               
+                if (len(winners) == 1):
+                    winner = winners[0]
+                else:
+                    winner = random.choice(winners) 
+            else:
+                winner = winners
+
+            self._matrix_updated = False
+            self._speak[meaning] = winners
+            return winner
         else:
-            return random.choice(winners) 
+            if pick:
+                if (len(self._speak[meaning]) == 1):
+                    return self._speak[meaning][0]
+                else:
+                    return random.choice(self._speak[meaning]) 
+            else:
+                return self._speak[meaning]
 
     def think(self, number):
         """
@@ -209,79 +244,102 @@ class AssociationMatrixLearner (_Learner):
         if (self.signal_space.noisy):
             distortions = []
             for thought,utterance,freq in lessons:
-                distortions.append([ [thought, distortion, frequency] for distortion, frequency in self.signal_space.distort(utterance) ])
+                distortions.extend([[thought, distortion, frequency] for distortion, frequency in self.signal_space.distort(utterance) ])
+            if self.observables and self.observables.show_lessons:
+                print distortions
             return distortions
         else:
+            if self.observables and self.observables.show_lessons:
+                print lessons
             return lessons
 
-    def print_initial_observables(self):
-        if (self.observables.show_initial_parameters):
-            print '# Delta:{} Epsilon:{}'.format(self.delta,self.epsilon)
-        if (self.observables.show_matrix_parameters):
-            precision = self.observables.print_precision
-            mm = self.codons.get_mutation_matrix()
-            print "# Mutation Matrix:\n",mm
-            dm = self.aas.get_distance_matrix()
-            print "# Distance matrix:\n",dm.round(precision)
-            fm = site_types.get_fitness_matrix()
-            print "# Fitness matrix:\n",fm.round(precision)
-            msm = self.get_mutation_selection_matrix(0)
-            print "# Iteration Matrix for site-type 0:\n",msm.round(precision)
+    def compute_compositionality(self):
+        """
+        Computes a compositionality measure related to the one introduced in Sella Ardell (2001) DIMACS
+        """
+        compositionality = 0
+        meanings = self.meaning_space.meanings()
+        for meaning1,meaning2 in itertools.combinations(meanings, 2):
+            mdist = self.meaning_space.hamming(meaning1,meaning2)
+            signals1 = self.speak(meaning1, pick=False)
+            signals2 = self.speak(meaning2, pick=False)
+            for signal1 in signals1:
+                for signal2 in signals2:
+                    sdist = self.signal_space.hamming(signal1,signal2)
+                    compositionality += ((mdist * sdist) / (len(signals1) * len(signals2)))
+        #pdb.set_trace()       
+        return compositionality
 
+    def compute_accuracy(self):
+        """
+        Computes the Communicative Accuracy of self e.g. Brighton et al (2005) eq.A.1 
+        """
+        accuracy = 0
+        meanings = self.meaning_space.meanings()
+        for meaning in meanings:
+            utterances = self.speak(meaning, pick=False)
+            for utterance in utterances:
+                understandings = self.hear(utterance, pick=False)
+                if meaning in understandings:
+                    accuracy += (1/len(utterances)) * (1/len(understandings))
+        #pdb.set_trace()
+        return (accuracy/len(meanings))
+
+    def compute_load(self):
+        """
+        Calculates the functional load by position, the hamming distance of meanings induced by changes in each position
+        """
+        load = [ 0 for _ in range(self.meaning_space.length) ]
+        meanings = self.meaning_space.meanings()
+        for position in xrange(self.signal_space.length):
+            comparisons = 0
+            for meaning in meanings:
+                utterances = self.speak(meaning, pick=False)
+                for utterance in utterances:
+                    neighbors = self.signal_space.compute_neighbors(utterance,position)
+                    for neighbor in neighbors:
+                        understandings = self.hear(neighbor, pick=False)
+                        for understanding in understandings:
+                            mdist = self.meaning_space.hamming(meaning,understanding)
+                            load[position] += mdist
+                            comparisons    += 1
+            load[position] /= comparisons
+        #pdb.set_trace()
+        return load
 
     def print_observables_header(self):
-        if self.observables.show_code_evolution_statistics or self.observables.show_all:
-            print '# RBE = Reassignments Before Explicit'
-            print '# RAE = Reassignments After Explicit'
-            print '# NAA = Number encoded Amino Acids'
-            print '# NER = Normalized Encoded Range (Ardell and Sella, 2001)'
-        if self.observables.show_fitness_statistics or self.observables.show_all:
-            print '# NFCM = Number Fitter Code Mutants'
-            print '# MMF  = Maximum Mutant Fitness'
-            print '# GR   = Growth Rate'
-            print '# GRFL = Growth Rate from Lambda'
-            print '#'
-		
+        obs = []
         precision = self.observables.print_precision
         width = precision + 8
-        print '#{:>{width}s}'.format('STEPS',width=(width-1)),
-        if self.observables.show_code_evolution_statistics or self.observables.show_all:
-            obs = ['RBE','RAE','NAA','NER']
-            print ('{:>{width}s}'*(len(obs))).format(*obs,width=width),
-        if self.observables.show_fitness_statistics or self.observables.show_all:
-            obs = ['NFCM','MMF','GR','GRFL']
-            print ('{:>{width}s}'*(len(obs))).format(*obs,width=width),
-        print	      
+        if self.observables.show_compositionality or self.observables.show_stats:
+            print '# COM = Compositionality'
+            obs.append('COM')
+        if self.observables.show_accuracy or self.observables.show_stats:
+            print '# ACC = Communicative Self-Accuracy'
+            obs.append('ACC')
+        if self.observables.show_load or self.observables.show_stats:            
+            print '# FLD = Functional Load by Position'
+            obs.append('FLD')
+        if obs:
+            print ('{:>{width}s}'*(len(obs))).format(*obs,width=width)
 
 
-	def print_observables(self):
-            if self.observables.show_codes or self.observables.show_all:
-                print '{}'.format(self.code)
+    def print_observables(self):
+        if self.observables.show_matrices:
+            print self.matrix
 
-            precision = self.observables.print_precision
-            width = precision + 8
+        obs = []
+        precision = self.observables.print_precision
+        width = precision + 8
+        if self.observables.show_compositionality or self.observables.show_stats:
+            obs.append(self.compute_compositionality())
+        if self.observables.show_accuracy or self.observables.show_stats:
+            obs.append(self.compute_accuracy())
+        if self.observables.show_load or self.observables.show_stats:            
+            obs.extend(self.compute_load())
 
-            print '{:{width}d}'.format(self.code.num_mutations,width=width),
-
-            #if self.observables.show_codes_single_line:
-            #	print '{}\t'.format(self.code.as_string),
-
-            if self.observables.show_code_evolution_statistics or self.observables.show_all:
-                obs = [self.code.num_reassignments_before_explicit(),self.code.num_reassignments_after_explicit(),self.code.num_encoded_amino_acids()]
-                print ('{:>{width}d}'*(len(obs))).format(*obs,width=width),
-                ner = self.code.normalized_encoded_range()
-                if ner.__class__.__name__ == 'str':
-                    type = 's'
-                else:
-                    type = 'f'
-                print '{:>{width}.{precision}{type}}'.format(self.code.normalized_encoded_range(),width=width-1,precision=precision,type=type),
-            if self.observables.show_fitness_statistics or self.observables.show_all:
-                print '{:>{width}d}'.format(self.num_fitter_code_mutants,width=width),
-                obs = [self.max_mutant_fitness,self.growth_rate(),self.growth_rate_from_lambda()]
-                print ('{:>{width}.{precision}f}'*(len(obs))).format(*obs,width=width,precision=precision),
-            if self.observables.show_messages:
-                print self.messages().round(precision),
-            print "\n"
+        if obs:
+            print ('{:>{width}f}'*(len(obs))).format(*obs,width=width)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,12 @@
+from __future__ import division
 import warnings
 import itertools
 import string
 import random
 import copy
+from distance import hamming
 from itertools import chain, combinations
+from collections import defaultdict
 from sympy.utilities.iterables import multiset_partitions as set_partitions
 
 class _SignalComponent():
@@ -199,6 +202,7 @@ class WordSignalSpace (_SignalSpace):
         self._weightvalues = []
         self._weights = {}
         self._noiserates = []
+        self._hamming = defaultdict(dict)
         self.noisy = False
         
     def add_component(self,component):
@@ -239,6 +243,16 @@ class WordSignalSpace (_SignalSpace):
 
     def noiserates(self):
         return self._noiserates
+
+    def hamming(self,sig1,sig2):
+        assert len(sig1) == len(sig2)
+        if (sig1 == sig2):
+            return 0
+        elif sig1 in self._hamming and sig2 in self._hamming[sig1]:
+            return self._hamming[sig1][sig2]
+        else:
+            self._hamming[sig1][sig2] = self._hamming[sig2][sig1] = (hamming(sig1,sig2)/self.length)
+            return self._hamming[sig1][sig2]
 
     def analyze(self, signal, length):
         slist = list(signal)
@@ -287,6 +301,14 @@ class WordSignalSpace (_SignalSpace):
 
         else:
             yield signal, 1.0
+
+
+    def compute_neighbors (self, signal, position):
+        clist = [ [s] for s in signal ]
+        clist[position] = self.components(position).distort(signal[position]) 
+        for chars in itertools.product(*clist):
+            utterance = ''.join(chars)
+            yield utterance
 
 if __name__ == "__main__":
     import doctest
