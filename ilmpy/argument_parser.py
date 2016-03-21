@@ -160,31 +160,30 @@ class ILM_Parser:
     # meaning-component : LPAREN INTEGER RPAREN
     # meaning-component : LBRACE INTEGER RBRACE 
 
-    precedence = (
-        ('right', 'DOT'),
-        ('right', 'SPACE'),
-    )
+    ## precedence = (
+    ##     ('right', 'SPACE'),
+    ## )
 
     def p_arguments(self,p):
         'arguments : signal-space SPACE meaning-space'
         p[0] = [p[1],p[3]]
 
     def p_signal_space_power_dot(self,p):
-        'signal-space : signal-component HAT INTEGER DOT signal-space'
-        for i in range(p[3]):
-            p[5].add_component(p[1])
-        p[0] = p[5]
+        'signal-space : signal-space DOT signal-component HAT INTEGER'
+        for i in range(p[5]):
+            p[1].add_component(p[3])
+        p[0] = p[1]
+
+    def p_signal_space_dot(self,p):
+        'signal-space : signal-space DOT signal-component'
+        p[1].add_component(p[3])
+        p[0] = p[1]
 
     def p_signal_space_power(self,p):
         'signal-space : signal-component HAT INTEGER'
         p[0] = signal_spaces.WordSignalSpace()
         for i in range(p[3]):
             p[0].add_component(p[1])
-
-    def p_signal_space_dot(self,p):
-        'signal-space : signal-component DOT signal-space'
-        p[3].add_component(p[1])
-        p[0] = p[3]
 
     def p_signal_space(self,p):
         'signal-space : signal-component'
@@ -237,15 +236,15 @@ class ILM_Parser:
         p[0] = p[1]
 
     def p_meaning_space_power_dot(self,p):
-        'meaning-space : meaning-component HAT INTEGER DOT meaning-space'
-        for i in range(p[3]):
-            p[5].add_component(p[1])
-        p[0] = p[5]
+        'meaning-space : meaning-space DOT meaning-component HAT INTEGER'
+        for i in range(p[5]):
+            p[1].add_component(p[3])
+        p[0] = p[1]
 
     def p_meaning_space_dot(self,p):
-        'meaning-space : meaning-component DOT meaning-space'
-        p[3].add_component(p[1])
-        p[0] = p[3]
+        'meaning-space : meaning-space DOT meaning-component'
+        p[1].add_component(p[3])
+        p[0] = p[1]
 
     def p_meaning_space_power(self,p):
         'meaning-space : meaning-component HAT INTEGER'

@@ -20,14 +20,16 @@ All Wrongs Reversed.
 Please cite Ardell and Winter (2016) in published works using this software.
 
 Examples:
-ilm <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
-ilm [a-z]{8} 4^2
-ilm [a-z]{8} 3^8
-ilm [a-g]{3} 3.4.2
-ilm (a|A)[bc] 2^2
-ilm ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) 8.5.4
-ilm ([a-z]/[aeiou])^4.(aeiou|AEIOU).(bd|pt) {1024}.2
-ilm ([a-z]/[aeiou])^4.((aeiou|AEIOU):0.01).(bd|pt) {1024}.((singular:0.1,plural:0.2)noun:0.3,(past:0.2,present:0.1)verb:0.4)
+ilm <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN>
+
+ilm "[bp].[ao].[dt]"                "2.2.2"  # classic Smith-Kirby lattice spaces; words are e.g. "bad"
+ilm "[a-g]^3"                       "(2)^3"  # "^" powers up to large spaces. Meaning space same as last example
+ilm "[a-g]^3"                 "{3}.(4).(2)"  # unordered (set-like) meaning-space-components do not generalize
+ilm "([b-d]:0.01).[aeiou]"        "(3).(4)"  # noise rate of 1% in first signal dimension
+ilm "(([a-z]\[aeiou]):0.05).[ae]"   "(4)^2"  # set-complement sound-space in first dimension is noisy at 5%
+ilm "(a|A).[bc]"                    "(2)^2"  # generalizable sound transformation in first signal dimension
+ilm "((aeiou|AEIOU):0.01)^2"        "{2}^2"  # any sound space can be noisy
+ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered 
 '''
     parser = OptionParser(usage=usage,version='{:<3s} version {:3.1f}'.format(prog,version))
     parser.disable_interspersed_args()
