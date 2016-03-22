@@ -175,6 +175,9 @@ class CombinatorialMeaningSpace (_MeaningSpace):
         self.length += 1
         self._components.append(component)
 
+        ## remove the all-general component from schemata
+        
+
     def components(self,i):
          return self._components[i]
 

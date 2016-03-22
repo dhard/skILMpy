@@ -88,11 +88,9 @@ class AssociationMatrixLearner (_Learner):
     'pEd'
 
     """
-    def __init__(self,meaning_space, signal_space, alpha=1, beta=-1, gamma=-1, delta=0, observables=None, seed=None, amplitude=None):
+    def __init__(self,meaning_space, signal_space, alpha=1, beta=-1, gamma=-1, delta=0, observables=None, amplitude=None):
         _Learner.__init__(self, meaning_space, signal_space)
-        if (seed):
-            numpy.random.seed(seed)
-            random.seed(seed)
+        #pdb.set_trace()
         if (amplitude):
             values = (2 * amplitude) * numpy.random.random_sample((len(meaning_space.schemata()), len(signal_space.schemata()))) - amplitude
         else:
@@ -125,6 +123,7 @@ class AssociationMatrixLearner (_Learner):
         """
         Learn associations from a list of signal-meaning pairs
         """
+        #pdb.set_trace()
         for datum in data:
             meaning = datum[0]
             signal = datum[1]
@@ -205,7 +204,7 @@ class AssociationMatrixLearner (_Learner):
                                 if (score > maxscore):
                                     maxscore = score
                                     winners = [signal]
-                                elif (score == maxscore):
+                                elif (score == maxscore and signal not in winners):
                                     winners.append(signal)                          
             if pick:               
                 if (len(winners) == 1):
@@ -253,12 +252,21 @@ class AssociationMatrixLearner (_Learner):
                 print "lessons: ",lessons
             return lessons
 
+    def vocabulary(self):
+        """
+        Returns all meanings and best signals learned for them.
+        """        
+        thoughts = self.meaning_space.meanings()
+        vocabulary = [ [thought, self.speak(thought, pick=False) ] for thought in thoughts ]
+        return vocabulary
+
     def compute_compositionality(self):
         """
         Computes a compositionality measure related to the one introduced in Sella Ardell (2001) DIMACS
         """
         #pdb.set_trace()
         compositionality = 0
+        comparisons = 0
         meanings = self.meaning_space.meanings()
         for meaning1,meaning2 in itertools.combinations(meanings, 2):
             mdist = self.meaning_space.hamming(meaning1,meaning2)
@@ -268,8 +276,9 @@ class AssociationMatrixLearner (_Learner):
                 for signal2 in signals2:
                     sdist = self.signal_space.hamming(signal1,signal2)
                     compositionality += ((mdist * sdist) / (len(signals1) * len(signals2)))
+                    comparisons += 1
         #pdb.set_trace()       
-        return compositionality
+        return (compositionality/comparisons)
 
     def compute_accuracy(self):
         """
@@ -304,7 +313,7 @@ class AssociationMatrixLearner (_Learner):
                         understandings = self.hear(neighbor, pick=False)
                         for understanding in understandings:
                             mdist = self.meaning_space.hamming(meaning,understanding)
-                            load[position] += mdist
+                            load[position] += (mdist /  self.meaning_space.length)
                             comparisons    += 1
             load[position] /= comparisons
         #pdb.set_trace()
@@ -351,6 +360,8 @@ class AssociationMatrixLearner (_Learner):
         if obs:
             print "stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width)
 
+        if self.observables.show_vocabulary:
+            print "vocabulary: ", self.vocabulary()
 
 if __name__ == "__main__":
     import doctest

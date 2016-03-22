@@ -6,6 +6,7 @@ from ilmpy.argument_parser import ILM_Parser
 import time
 import sys
 import numpy
+import random
 import pdb
 
 starttime = time.time()
@@ -86,16 +87,15 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 		      dest="precision", type="int",  default=4,
 		      help="set print precision for parameter printing. Default: %default")
 
-    parser.set_defaults(show_matrices=False, show_lessons=True, show_compositionality=False, show_accuracy=False, show_load=False, show_stats=False) #show_vocabulary=False, show_final_vocabulary = False)
+    parser.set_defaults(show_matrices=False, show_lessons=True, show_compositionality=False, show_accuracy=False, show_load=False, show_stats=False, show_vocabulary=False, show_final_vocabulary = False)
     parser.add_option("--show-matrices", action="store_true", dest="show_matrices", help="print internal message-signal matrices at each iteration")
     parser.add_option("--no-show-lessons", action="store_false", dest="show_lessons", help="do not print the lessons passed to new agents at each iteration")
     parser.add_option("--show-compositionality", action="store_true", dest="show_compositionality", help="print compositionality at each iteration")
     parser.add_option("--show-accuracy", action="store_true", dest="show_accuracy", help="print communicative accuracy at each iteration")
     parser.add_option("--show-load", action="store_true", dest="show_load", help="print functional load by signal position at each iteration")
     parser.add_option("--show-stats", action="store_true", dest="show_stats", help="print all statistics at each iteration")
-
-    #parser.add_option("--show-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at each iteration")
-    #parser.add_option("--show-final-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at the end of each chain")
+    parser.add_option("--show-vocabulary", action="store_true", dest="show_vocabulary", help="print the signal for each meaning at each iteration")
+    parser.add_option("--show-final-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at the end of each chain")
 
     myargv = sys.argv
     (options, args) = parser.parse_args()
@@ -117,15 +117,16 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     program_kwargs = {}
 
     if options.seed is not None:
-        program_kwargs['seed'] = options.seed
+        numpy.random.seed(options.seed)
+        random.seed(options.seed)
 
     if options.amplitude is not None:
         program_kwargs['amplitude'] = options.amplitude
 
     observables = ilmpy.observables.Observables(show_matrices                  = options.show_matrices,
                                                 show_lessons                   = options.show_lessons,
-                                                #show_vocabulary                = options.show_vocabulary,
-                                                #show_final_vocabulary          = options.show_final_vocabulary,
+                                                show_vocabulary                = options.show_vocabulary,
+                                                show_final_vocabulary          = options.show_final_vocabulary,
                                                 show_compositionality          = options.show_compositionality,
                                                 show_accuracy                  = options.show_accuracy,
                                                 show_load                      = options.show_load,
@@ -145,10 +146,15 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     print '#'
 
     for trial in xrange(options.num_trials):
-        founder = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
-        parent = founder
+        parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
         if trial == 0:
-            parent.print_parameters()#options.num_interactions,options.num_generations)
+            parent.print_parameters()
+            if options.seed is not None:
+                print '# seed: {}'.format(options.seed)                
+            if options.amplitude is not None:
+                print '# amplitude: {}'.format(options.amplitude)
+            print '# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,options.num_trials)
+            print '# ',
             parent.print_observables_header()
         for generation in xrange(options.num_generations):
             print '# Trial {} Iteration {}'.format(trial,generation)

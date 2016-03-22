@@ -197,6 +197,16 @@ class WordSignalSpace (_SignalSpace):
     >>> signal_space2.add_component(sounds4)
     >>> [[k,v] for k,v in signal_space2.distort('bada')]    
     [['bada', 0.7200000000000001], ['badA', 0.18000000000000002], ['pada', 0.02666666666666667], ['padA', 0.006666666666666667], ['rada', 0.02666666666666667], ['radA', 0.006666666666666667], ['dada', 0.02666666666666667], ['dadA', 0.006666666666666667]]
+    >>> [n for n in signal_space2.compute_neighbors('bada',0)]
+    ['pada', 'rada', 'dada']
+    >>> [n for n in signal_space2.compute_neighbors('bada',1)]
+    ['bAda']
+    >>> [n for n in signal_space2.compute_neighbors('bada',2)]
+    ['bata']
+    >>> [n for n in signal_space2.compute_neighbors('bada',3)]
+    ['badA']
+    >>> [n for n in signal_space2.compute_neighbors('radE',3)]
+    ['rade']
     """
     def __init__(self):
         _SignalSpace.__init__(self)
