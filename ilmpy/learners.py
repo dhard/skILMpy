@@ -254,7 +254,7 @@ class AssociationMatrixLearner (_Learner):
 
     def vocabulary(self):
         """
-        Returns all meanings and best signals learned for them.
+        Returns all meanings and optimal signals learned for them.
         """        
         thoughts = self.meaning_space.meanings()
         vocabulary = [ [thought, self.speak(thought, pick=False) ] for thought in thoughts ]
@@ -303,6 +303,28 @@ class AssociationMatrixLearner (_Learner):
         #pdb.set_trace()
         load = [ 0 for _ in range(self.signal_space.length) ]
         meanings = self.meaning_space.meanings()
+        for position in xrange(self.signal_space.length):
+            comparisons = 0
+            for meaning in meanings:
+                utterances = self.speak(meaning, pick=False)
+                for utterance in utterances:
+                    neighbors = self.signal_space.compute_neighbors(utterance,position)
+                    for neighbor in neighbors:
+                        understandings = self.hear(neighbor, pick=False)
+                        for understanding in understandings:
+                            mdist = self.meaning_space.hamming(meaning,understanding)
+                            load[position] += (mdist /  self.meaning_space.length)
+                            comparisons    += 1
+            load[position] /= comparisons
+        pdb.set_trace()
+        return load
+
+    def compute_entropy(self):
+        """
+        Calculates the symbol Shannon entropy of the vocabulary by signal position
+        """
+        #pdb.set_trace()
+        vocab = self.vocabulary()
         for position in xrange(self.signal_space.length):
             comparisons = 0
             for meaning in meanings:
