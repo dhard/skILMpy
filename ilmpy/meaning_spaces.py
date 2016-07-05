@@ -237,7 +237,7 @@ class CombinatorialMeaningSpace (_MeaningSpace):
     def sample(self,number):
         if (number < 0 or (number != floor(number))):
             raise ValueError("Parameter number must be an integer >= 0. You passed %f" % (number))
-        return sample(self._meanings,number)
+        return sample(self._meanings,number) # samples without replacement
         
 
 if __name__ == "__main__":
