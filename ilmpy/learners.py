@@ -1,9 +1,11 @@
 from __future__ import division
+from __future__ import print_function 
 import warnings
 import pandas
 import numpy
 import pdb
-import signal_spaces,meaning_spaces
+import ilmpy.signal_spaces as signal_spaces
+import ilmpy.meaning_spaces as meaning_spaces
 import random
 import copy
 import itertools
@@ -150,7 +152,7 @@ class AssociationMatrixLearner (_Learner):
             meanings = self.meaning_space.meanings()
             winners = []
             maxscore = None
-            for analysis_size in xrange(2,(len(signal)+1)):
+            for analysis_size in range(2,(len(signal)+1)):
                 for signal_analysis in self.signal_space.analyze(signal,analysis_size):
                     for meaning in meanings:
                         for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
@@ -159,7 +161,7 @@ class AssociationMatrixLearner (_Learner):
                                 score = 0
                                 for signal_schema,meaning_schema in pairs:
                                     score += self.score_meaning(meaning_schema,signal_schema)
-                                if (score > maxscore):
+                                if (not maxscore or score > maxscore):
                                     maxscore = score
                                     winners = [meaning]
                                 elif (score == maxscore):
@@ -191,8 +193,8 @@ class AssociationMatrixLearner (_Learner):
         if self._matrix_updated or not meaning in self._speak:
             signals = self.signal_space.signals()
             winners = []
-            maxscore = None
-            for analysis_size in xrange(2,(len(meaning)+1)):
+            maxscore = None   
+            for analysis_size in range(2,(len(meaning)+1)):
                 for meaning_analysis in self.meaning_space.analyze(meaning,analysis_size):
                     for signal in signals:
                         for signal_analysis in self.signal_space.analyze(signal,analysis_size):
@@ -201,16 +203,20 @@ class AssociationMatrixLearner (_Learner):
                                 score = 0
                                 for signal_schema,meaning_schema in pairs:
                                     score += self.score_signal(meaning_schema,signal_schema)
-                                if (score > maxscore):
+                            
+                              
+                                if (not maxscore or score > maxscore):
                                     maxscore = score
                                     winners = [signal]
                                 elif (score == maxscore and signal not in winners):
                                     winners.append(signal)                          
-            if pick:               
+            if pick:              
                 if (len(winners) == 1):
                     winner = winners[0]
                 else:
+            
                     winner = random.choice(winners) 
+                    
             else:
                 winner = winners
 
@@ -222,6 +228,7 @@ class AssociationMatrixLearner (_Learner):
                 if (len(self._speak[meaning]) == 1):
                     return self._speak[meaning][0]
                 else:
+                   
                     return random.choice(self._speak[meaning]) 
             else:
                 return self._speak[meaning]
@@ -245,11 +252,11 @@ class AssociationMatrixLearner (_Learner):
             for thought,utterance,freq in lessons:
                 distortions.extend([[thought, distortion, frequency] for distortion, frequency in self.signal_space.distort(utterance) ])
             if self.observables and self.observables.show_lessons:
-                print "lessons: ",distortions
+                print("lessons: ",distortions)
             return distortions
         else:
             if self.observables and self.observables.show_lessons:
-                print "lessons: ",lessons
+                print("lessons: ",lessons)
             return lessons
 
     def vocabulary(self):
@@ -303,7 +310,7 @@ class AssociationMatrixLearner (_Learner):
         #pdb.set_trace()
         load = [ 0 for _ in range(self.signal_space.length) ]
         meanings = self.meaning_space.meanings()
-        for position in xrange(self.signal_space.length):
+        for position in range(self.signal_space.length):
             comparisons = 0
             for meaning in meanings:
                 utterances = self.speak(meaning, pick=False)
@@ -325,7 +332,7 @@ class AssociationMatrixLearner (_Learner):
         """
         #pdb.set_trace()
         vocab = self.vocabulary()
-        for position in xrange(self.signal_space.length):
+        for position in range(self.signal_space.length):
             comparisons = 0
             for meaning in meanings:
                 utterances = self.speak(meaning, pick=False)
@@ -345,7 +352,7 @@ class AssociationMatrixLearner (_Learner):
         params = {'alpha':self.alpha, 'beta':self.beta, 'gamma':self.gamma, 'delta':self.delta}#, 'interactions": }
         precision = self.observables.print_precision
         width = precision + 8
-        print "# params: ",'alpha: {alpha}  beta: {beta} gamma: {gamma} delta: {delta}'.format(**params)
+        print("# params: ",'alpha: {alpha}  beta: {beta} gamma: {gamma} delta: {delta}'.format(**params))
 
 
     def print_observables_header(self):
@@ -353,21 +360,21 @@ class AssociationMatrixLearner (_Learner):
         precision = self.observables.print_precision
         width = precision + 8
         if self.observables.show_compositionality or self.observables.show_stats:
-            print '# COM = Compositionality'
+            print('# COM = Compositionality')
             obs.append('COM')
         if self.observables.show_accuracy or self.observables.show_stats:
-            print '# ACC = Communicative Self-Accuracy'
+            print('# ACC = Communicative Self-Accuracy')
             obs.append('ACC')
         if self.observables.show_load or self.observables.show_stats:            
-            print '# FLD = Functional Load by Signal Position, One for Each'
+            print('# FLD = Functional Load by Signal Position, One for Each')
             obs.append('FLD')
         if obs:
-            print ('{:>{width}s}'*(len(obs))).format(*obs,width=width)
+            print(('{:>{width}s}'*(len(obs))).format(*obs,width=width))
 
 
     def print_observables(self):
         if self.observables.show_matrices:
-            print self.matrix
+            print(self.matrix)
 
         obs = []
         precision = self.observables.print_precision
@@ -380,10 +387,10 @@ class AssociationMatrixLearner (_Learner):
             obs.extend(self.compute_load())
 
         if obs:
-            print "stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width)
+            print("stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width))
 
         if self.observables.show_vocabulary:
-            print "vocabulary: ", self.vocabulary()
+            print("vocabulary: ", self.vocabulary())
 
 if __name__ == "__main__":
     import doctest

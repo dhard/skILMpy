@@ -1,4 +1,6 @@
+from __future__ import division 
 import ilmpy
+
 
 class Observables():
     """

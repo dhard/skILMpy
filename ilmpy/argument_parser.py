@@ -1,9 +1,12 @@
+from __future__ import print_function
+from __future__ import division 
 import ply.lex as lex
 import ply.yacc as yacc
 import os
-import ilmpy
-import signal_spaces
-import meaning_spaces
+#import ilmpy
+import ilmpy.signal_spaces as signal_spaces
+import ilmpy.meaning_spaces as meaning_spaces
+
 
 
 #%prog <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
@@ -229,7 +232,7 @@ class ILM_Parser:
 
     def p_range(self,p):
         'range : LETTER DASH LETTER'
-        p[0] = ''.join([chr(c) for c in xrange(ord(p[1]), ord(p[3])+1)])
+        p[0] = ''.join([chr(c) for c in range(ord(p[1]), ord(p[3])+1)])
 
     def p_noise_rate(self,p):
         'noise-rate : FLOAT'
