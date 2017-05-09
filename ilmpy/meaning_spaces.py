@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division # it already had it
 import warnings
 import itertools
 import string
@@ -16,7 +16,7 @@ class _MeaningComponent():
     def __init__(self, size):
         # check value
         self.size = size
-        self._meanings = set([str(i) for i in list(xrange(size))]) # meanings are vectors of integers and graph nodes
+        self._meanings = set([str(i) for i in list(range(size))]) # meanings are vectors of integers and graph nodes
         self._schemata = self._meanings | set('*') 
 
         ## THESE WEIGHTS ARE FOR THE SMITH-KIRBY WEIGHTS FOR PRODUCTION AND RECEPTION
@@ -210,7 +210,7 @@ class CombinatorialMeaningSpace (_MeaningSpace):
         ## import pdb
         ## pdb.set_trace()
         mlist = meaning.split('.')
-        partitions = set_partitions(xrange(len(mlist)),length)
+        partitions = set_partitions(range(len(mlist)),length)
         for partition in partitions:
             analysis = []
             for iset in partition:
@@ -224,8 +224,8 @@ class CombinatorialMeaningSpace (_MeaningSpace):
         #import pdb
         #pdb.set_trace()
         mlist = meaning.split('.')
-        for i in xrange(len(mlist)):
-            for locs in itertools.combinations(xrange(len(mlist)), i):
+        for i in range(len(mlist)):
+            for locs in itertools.combinations(range(len(mlist)), i):
                 meanings = [[component] for component in mlist]
                 for loc in locs:
                     original_meaning = mlist[loc]

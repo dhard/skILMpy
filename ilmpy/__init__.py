@@ -1,3 +1,3 @@
-import signal_spaces,meaning_spaces,argument_parser,learners,observables
+import ilmpy.signal_spaces,ilmpy.meaning_spaces,ilmpy.argument_parser,ilmpy.learners,ilmpy.observables
 
 __all__ = []

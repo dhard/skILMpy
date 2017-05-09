@@ -1,6 +1,8 @@
 #! /usr/bin/python
+from __future__ import division 
+from __future__ import print_function
 from optparse import OptionParser, OptionValueError
-from types import FloatType
+#from types import FloatType
 import ilmpy
 from ilmpy.argument_parser import ILM_Parser
 import time
@@ -107,9 +109,9 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     try:
         (signal_space,meaning_space) = ilm_parser.parse(arg_string)
     except ValueError:
-        print '\n'
-        print usage
-        print '\n{}: syntax error invalid arguments to ilm: {}\n'.format(prog,arg_string)
+        print('\n')
+        print(usage)
+        print('\n{}: syntax error invalid arguments to ilm: {}\n'.format(prog,arg_string))
         sys.exit(0)
 
 
@@ -135,34 +137,35 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
     program_kwargs['observables'] = observables
                                                 
-    print '# {:<3s} version {:3.1f}'.format(prog,version)
-    print '# Copyright (2016) David H. Ardell.'
-    print '# All Wrongs Reversed.'
-    print '#'
-    print '# Please cite Ardell and Winter (2016) in published works using this software.'
-    print '#'
-    print '# execution command:'
-    print '# '+' '.join(myargv)
-    print '#'
+    print('# {:<3s} version {:3.1f}'.format(prog,version))
+    print('# Copyright (2016) David H. Ardell.')
+    print('# All Wrongs Reversed.')
+    print('#')
+    print('# Please cite Ardell and Winter (2016) in published works using this software.')
+    print('#')
+    print('# execution command:')
+    print('# '+' '.join(myargv))
+    print('#')
 
-    for trial in xrange(options.num_trials):
+    for trial in range(options.num_trials):
         parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
         if trial == 0:
             parent.print_parameters()
             if options.seed is not None:
-                print '# seed: {}'.format(options.seed)                
+                print('# seed: {}'.format(options.seed))                
             if options.amplitude is not None:
-                print '# amplitude: {}'.format(options.amplitude)
-            print '# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,options.num_trials)
-            print '# ',
+                print('# amplitude: {}'.format(options.amplitude))
+            print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,options.num_trials))
+            print('# ')
             parent.print_observables_header()
-        for generation in xrange(options.num_generations):
-            print '# Trial {} Iteration {}'.format(trial,generation)
+        for generation in range(options.num_generations):
+            print('# Trial {} Iteration {}'.format(trial,generation))
             child = parent.spawn()
+            #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
             lessons = parent.teach(options.num_interactions)
             child.learn(lessons)
             child.print_observables()
             parent = child
         
-print "# Run time (minutes): ",round((time.time()-starttime)/60,3)
+print("# Run time (minutes): ",round((time.time()-starttime)/60,3))
                     

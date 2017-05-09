@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division # it already had it
 import warnings
 import itertools
 import string
@@ -98,7 +98,7 @@ class TransformSignalComponent (_SignalComponent):
         self.longsounds  = longsounds
         shortlong = shortsounds + longsounds
         longshort = longsounds + shortsounds
-        self.translation_table = string.maketrans(shortlong,longshort)
+        self.translation_table = str.maketrans(shortlong,longshort)
 
         transform_wildcards = list("@#!+?$&%=<>.")[:len(shortsounds)]
         
@@ -298,10 +298,10 @@ class WordSignalSpace (_SignalSpace):
         slist = list(signal)
         if self.noisy:
             rates = self.noiserates()
-            noisyindices = [ i for i in xrange(len(signal)) if rates[i] > 0 ]
-            dlist = [ self.components(i).distort(signal[i]) if i in noisyindices else [] for i in xrange(len(signal)) ]
-            sfreq = [ (1 - rates[i]) if i in noisyindices else 1 for i in xrange(len(signal))]
-            dfreq = [ (rates[i] / len(dlist[i])) if i in noisyindices else 1 for i in xrange(len(signal)) ]
+            noisyindices = [ i for i in range(len(signal)) if rates[i] > 0 ]
+            dlist = [ self.components(i).distort(signal[i]) if i in noisyindices else [] for i in range(len(signal)) ]
+            sfreq = [ (1 - rates[i]) if i in noisyindices else 1 for i in range(len(signal))]
+            dfreq = [ (rates[i] / len(dlist[i])) if i in noisyindices else 1 for i in range(len(signal)) ]
             clist = [ [s] for s in signal ]
             for i in noisyindices:
                 clist[i].extend(dlist[i])
