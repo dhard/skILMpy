@@ -1,7 +1,6 @@
 from __future__ import division # it already had it
 import warnings
 import itertools
-import string
 import random
 import copy
 from distance import hamming
@@ -116,7 +115,7 @@ class TransformSignalComponent (_SignalComponent):
         return [self._generalizations[sound]]
 
     def distort(self, sound):
-        return list(string.translate(sound,self.translation_table)) 
+        return list(sound.translate(self.translation_table)) 
 
 class _SignalSpace():
     """
