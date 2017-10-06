@@ -323,7 +323,7 @@ class AssociationMatrixLearner (_Learner):
                             load[position] += (mdist /  self.meaning_space.length)
                             comparisons    += 1
             load[position] /= comparisons
-        pdb.set_trace()
+        #pdb.set_trace()
         return load
 
     def compute_entropy(self):
