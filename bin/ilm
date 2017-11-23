@@ -157,35 +157,43 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
     num_trials=options.num_trials
     def multidef (num_trials,options):
+        result_dict={}
         for trial in range(num_trials):
-            parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
-            if trial == 0:
-                parent.print_parameters()
-                if options.seed is not None:
-                    print('# seed: {}'.format(options.seed))
-                if options.amplitude is not None:
-                    print('# amplitude: {}'.format(options.amplitude))
-                print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
-                print('# ')
-                parent.print_observables_header()
+            result_dict[trial]={}
+            print("Iter {}".format(trial), file=sys.stderr)
             for generation in range(options.num_generations):
-                print('# Trial {} Iteration {}'.format(trial,generation))
-                child = parent.spawn()
-                lessons = parent.teach(options.num_interactions)
-                child.learn(lessons)
-                child.print_observables()
-                parent = child
-        return()
+                parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
+                if trial == 0:
+                    parent.print_parameters()
+                    if options.seed is not None:
+                        print('# seed: {}'.format(options.seed))
+                    if options.amplitude is not None:
+                        print('# amplitude: {}'.format(options.amplitude))
+                    print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
+                    print('# ')
+                    parent.print_observables_header()
+                for generation in range(options.num_generations):
+                    print('# Trial {} Iteration {}'.format(trial,generation))
+                    child = parent.spawn()
+                    lessons = parent.teach(options.num_interactions)
+                    child.learn(lessons)
+                    result_dict[trial][generation]=child.print_observables()
+                    parent = child
+        return(result_dict)
 
 
 
     with Pool(processes = options.num_workers) as pool:
+        processes = options.num_workers
+        if processes > num_trials:
+            processes=num_trials
+            
         iter_jobs=[]
-        for x in range (options.num_workers):
+        for x in range (processes):
             if (x == 0):
-                iter_jobs.append((num_trials//options.num_workers+num_trials%options.num_workers, options))
+                iter_jobs.append((num_trials//processes+num_trials%processes, options))
             else:
-                iter_jobs.append((num_trials//options.num_workers, options))
+                iter_jobs.append((num_trials//processes, options))
         result=pool.starmap(multidef,iter_jobs)
 
 
@@ -193,5 +201,20 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
 
 
+
+
+
+        num_trials=0
+        for result_dict in result:
+            for trial in result_dict:
+                num_trials+=1
+                for gen in result_dict[trial]:
+                    for obs in result_dict[trial][gen]:
+                        result_dict[trial][gen][obs]
+                        output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
+                    print(output_string)
+                    print(obs_dict["load"])
+
+ 
 print("# Run time (minutes): ",round((time.time()-starttime)/60,3))
                     
