@@ -212,7 +212,8 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
                     for obs in result_dict[trial][gen]:
                         result_dict[trial][gen][obs]
                         #output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
-                    print(result_dict)
+                    if result_dict[trial][gen][obs]:
+                        print(result_dict)
                     #print(obs_dict["load"])
 
  
