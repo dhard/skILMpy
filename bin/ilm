@@ -159,19 +159,19 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     def multidef (num_trials,options):
         result_dict={}
         for trial in range(num_trials):
+            parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
             result_dict[trial]={}
             print("Iter {}".format(trial), file=sys.stderr)
             for generation in range(options.num_generations):
-                parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
-                if trial == 0:
-                    parent.print_parameters()
-                    if options.seed is not None:
-                        print('# seed: {}'.format(options.seed))
-                    if options.amplitude is not None:
-                        print('# amplitude: {}'.format(options.amplitude))
-                    print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
-                    print('# ')
-                    parent.print_observables_header()
+#                if trial == 0:
+#                    parent.print_parameters()
+#                    if options.seed is not None:
+#                        print('# seed: {}'.format(options.seed))
+#                    if options.amplitude is not None:
+#                        print('# amplitude: {}'.format(options.amplitude))
+#                    print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
+#                    print('# ')
+#                    parent.print_observables_header()
                 for generation in range(options.num_generations):
                     print('# Trial {} Iteration {}'.format(trial,generation))
                     child = parent.spawn()
@@ -211,9 +211,9 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
                 for gen in result_dict[trial]:
                     for obs in result_dict[trial][gen]:
                         result_dict[trial][gen][obs]
-                        output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
-                    print(output_string)
-                    print(obs_dict["load"])
+                        #output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
+                    print(result_dict)
+                    #print(obs_dict["load"])
 
  
 print("# Run time (minutes): ",round((time.time()-starttime)/60,3))
