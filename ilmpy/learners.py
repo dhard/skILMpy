@@ -371,27 +371,35 @@ class AssociationMatrixLearner (_Learner):
         if obs:
             print(('{:>{width}s}'*(len(obs))).format(*obs,width=width))
 
-
+    
     def print_observables(self):
+        obs_dict={"matrix":None, "precision": None, "compositionality":None, "accuracy": None, "load": None, "vocabulary": None}
         if self.observables.show_matrices:
-            print(self.matrix)
-
+            #print(self.matrix)
+            obs_dict["matirx"]=str(self.martix)
         obs = []
         precision = self.observables.print_precision
+        obs_dict["precision"]=self.observables.print_precision
         width = precision + 8
-        if self.observables.show_compositionality or self.observables.show_stats:
-            obs.append(self.compute_compositionality())
-        if self.observables.show_accuracy or self.observables.show_stats:
-            obs.append(self.compute_accuracy())
-        if self.observables.show_load or self.observables.show_stats:            
-            obs.extend(self.compute_load())
 
-        if obs:
-            print("stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width))
+        if self.observables.show_compositionality or self.observables.show_stats:
+            #obs.append(self.compute_compositionality())
+            obs_dict["compositionality"]=self.compute_compositionality()
+        if self.observables.show_accuracy or self.observables.show_stats:
+            #obs.append(self.compute_accuracy())
+            obs_dict["stat"]=self.compute_accuracy()
+    
+        if self.observables.show_load or self.observables.show_stats:            
+            #obs.extend(self.compute_load())
+            obs_dict["load"]=self.compute_load()
+
+       # if obs:
+       #     print("stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width))
 
         if self.observables.show_vocabulary:
-            print("vocabulary: ", self.vocabulary())
-
+            #print("vocabulary: ", self.vocabulary())
+            obs_dict["vocabulary"]=self.vocabulary()
+        return obs_dict
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

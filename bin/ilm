@@ -10,7 +10,9 @@ import sys
 import numpy
 import random
 import pdb
-
+import multiprocessing as mp
+import os
+from multiprocessing import Pool 
 starttime = time.time()
 if __name__ == "__main__":
     version = 0.1
@@ -40,6 +42,11 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     ## parser.add_option("--method", dest="method", type="choice",
     ##     	      choices=method_choices, default="association",
     ##     	      help="learning method. Choose from %s" % method_choices)
+
+
+    parser.add_option("-p", "--proc",
+                      dest="num_workers", type="int", default=os.cpu_count(),
+                      help="Maximum number of concurrent processes\n Default: The reported number of cores by the OS.")
 
     parser.add_option("-T","--trials",
 		      dest="num_trials", type="int", default=1,
@@ -147,25 +154,78 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     print('# '+' '.join(myargv))
     print('#')
 
-    for trial in range(options.num_trials):
-        parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
-        if trial == 0:
-            parent.print_parameters()
-            if options.seed is not None:
-                print('# seed: {}'.format(options.seed))                
-            if options.amplitude is not None:
-                print('# amplitude: {}'.format(options.amplitude))
-            print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,options.num_trials))
-            print('# ')
-            parent.print_observables_header()
-        for generation in range(options.num_generations):
-            print('# Trial {} Iteration {}'.format(trial,generation))
-            child = parent.spawn()
-            #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
-            lessons = parent.teach(options.num_interactions)
-            child.learn(lessons)
-            child.print_observables()
-            parent = child
-        
+
+    num_trials=options.num_trials
+    def multidef (num_trials,options):
+        result_dict={}
+        for trial in range(num_trials):
+            parent = ilmpy.learners.AssociationMatrixLearner(*program_args,**program_kwargs)
+            result_dict[trial]={}
+            print("Iter {}".format(trial), file=sys.stderr)
+            for generation in range(options.num_generations):
+#                if trial == 0:
+#                    parent.print_parameters()
+#                    if options.seed is not None:
+#                        print('# seed: {}'.format(options.seed))
+#                    if options.amplitude is not None:
+#                        print('# amplitude: {}'.format(options.amplitude))
+#                    print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
+#                    print('# ')
+#                    parent.print_observables_header()
+                for generation in range(options.num_generations):
+#                    print('# Trial {} Iteration {}'.format(trial,generation))
+                    child = parent.spawn()
+                    lessons = parent.teach(options.num_interactions)
+                    child.learn(lessons)
+                    result_dict[trial][generation]=child.print_observables()
+                    parent = child
+        return(result_dict,parent)
+
+
+    result_dict,parent=multidef (num_trials,options)
+    with Pool(processes = options.num_workers) as pool:
+        processes = options.num_workers
+        if processes > num_trials:
+            processes=num_trials
+            
+        iter_jobs=[]
+        for x in range (processes):
+            if (x == 0):
+                iter_jobs.append((num_trials//processes+num_trials%processes, options))
+            else:
+                iter_jobs.append((num_trials//processes, options))
+
+        parent.print_parameters()
+        if options.seed is not None:
+            print('# seed: {}'.format(options.seed))
+        if options.amplitude is not None:
+            print('# amplitude: {}'.format(options.amplitude))
+        print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
+        print('# ')
+        parent.print_observables_header()
+        result=pool.starmap(result_dict,iter_jobs)         #(multidef,iter_jobs)
+
+
+
+
+
+
+
+
+
+        num_trials=0
+        for result_dict in result:
+            for trial in result_dict:
+                num_trials+=1
+                for gen in result_dict[trial]:
+                    for obs in result_dict[trial][gen]:
+                        if result_dict[trial][gen][obs]:
+                            result_dict[trial][gen][obs]=result_dict[trial][gen][obs]
+                        #output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
+                    #if result_dict[trial][gen][obs]:
+                    print(result_dict)
+                    #print(obs_dict["load"])
+
+ 
 print("# Run time (minutes): ",round((time.time()-starttime)/60,3))
                     
