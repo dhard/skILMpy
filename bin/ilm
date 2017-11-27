@@ -173,16 +173,16 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 #                    print('# ')
 #                    parent.print_observables_header()
                 for generation in range(options.num_generations):
-                    print('# Trial {} Iteration {}'.format(trial,generation))
+#                    print('# Trial {} Iteration {}'.format(trial,generation))
                     child = parent.spawn()
                     lessons = parent.teach(options.num_interactions)
                     child.learn(lessons)
                     result_dict[trial][generation]=child.print_observables()
                     parent = child
-        return(result_dict)
+        return(result_dict,parent)
 
 
-
+    result_dict,parent=multidef (num_trials,options)
     with Pool(processes = options.num_workers) as pool:
         processes = options.num_workers
         if processes > num_trials:
@@ -194,7 +194,16 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
                 iter_jobs.append((num_trials//processes+num_trials%processes, options))
             else:
                 iter_jobs.append((num_trials//processes, options))
-        result=pool.starmap(multidef,iter_jobs)
+
+        parent.print_parameters()
+        if options.seed is not None:
+            print('# seed: {}'.format(options.seed))
+        if options.amplitude is not None:
+            print('# amplitude: {}'.format(options.amplitude))
+        print('# bottleneck: {}\n# iterations: {}\n# trials: {}'.format(options.num_interactions,options.num_generations,num_trials))
+        print('# ')
+        parent.print_observables_header()
+        result=pool.starmap(result_dict,iter_jobs)         #(multidef,iter_jobs)
 
 
 
@@ -212,8 +221,8 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
                     for obs in result_dict[trial][gen]:
                         result_dict[trial][gen][obs]
                         #output_string=ilmpy.learners.AssociationMatrixLearner.print_observables("self")#["matrix"]#,"precision","compositionality", "accuracy","load", "vocabulary"]
-                    if result_dict[trial][gen][obs]:
-                        print(result_dict)
+                    #if result_dict[trial][gen][obs]:
+                    print(result_dict)
                     #print(obs_dict["load"])
 
  
