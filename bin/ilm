@@ -13,23 +13,29 @@ import pdb
 
 starttime = time.time()
 if __name__ == "__main__":
-    version = 0.1
+    version = 0.2
     prog = 'ilm'
     usage = '''usage: %prog [options] <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
 
-Iterated Learning Models in Python (ILMpy) version 0.1
-Copyright (2016) David H. Ardell
+Iterated Learning Models in Python (ILMpy) version 0.2
+Copyright (2018) David H. Ardell
 All Wrongs Reversed.
 Please cite Ardell and Winter (2016) in published works using this software.
+
+Usage:
+The meaning space size must be larger than the bottleneck size set by (-I INTERACTIONS)
 
 Examples:
 ilm <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN>
 
-ilm "[bp].[ao].[dt]"                "2.2.2"  # classic Smith-Kirby lattice spaces; words are e.g. "bad"
-ilm "[a-g]^3"                       "(2)^3"  # "^" powers up to large spaces. Meaning space same as last example
-ilm "[a-g]^3"                 "{3}.(4).(2)"  # unordered (set-like) meaning-space-components do not generalize
+ilm "[bp].[ao]"                   "(4).(3)"  # classic Smith-Kirby lattice spaces; words are e.g. "ba" and "po"
+ilm "[a-z].a.[dt]"               "(16).(2)"  # compositionality
+ilm "[a-c]^2"                       "(3)^3"  # "^" powers up components. Signal/meaning space sizes are 9/27
+ilm "[a-z].a.[dt]"               "(16).{2}"  # unordered (set-like) meaning-space-components do not generalize
 ilm "([b-d]:0.01).[aeiou]"        "(3).(4)"  # noise rate of 1% in first signal dimension
 ilm "(([a-z]\[aeiou]):0.05).[ae]"   "(4)^2"  # set-complement sound-space in first dimension is noisy at 5%
+
+THE BELOW ARE FOR FUTURE REFERENCE: generalizable sound transformations ARE NOT YET IMPLEMENTED!
 ilm "(a|A).[bc]"                    "(2)^2"  # generalizable sound transformation in first signal dimension
 ilm "((aeiou|AEIOU):0.01)^2"        "{2}^2"  # any sound space can be noisy
 ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered 
