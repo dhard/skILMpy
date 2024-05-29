@@ -1,2 +1,2 @@
-# ILMpy
-Iterated Learning Models in Python
+# skILMpy
+Generalized Smith-Kirby Iterated Learning Models in Python
