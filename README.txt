@@ -11,6 +11,9 @@ relies heavily on, and absolutely requires, numpy as a prerequisite.
 You should install numpy with the easy_install framework to be detected as
 installed when installing this package. 
 
+numpy
+pandas,ply,distance,sympy
+
 
 Installation
 ============================================
