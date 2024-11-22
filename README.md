@@ -6,12 +6,13 @@ Installation
 It is recommended to install all dependencies and run skILMpy with uv. 
 Instructions for downloading uv can be found here: https://docs.astral.sh/uv/ but in brief, see below
 
-`pip install uv`
-`pip install --upgrade pip`
-`git clone https://github.com/dhard/skILMpy.git`
-`uv sync`
-`uv run ilm.py`
-
+```
+pip install uv
+pip install --upgrade pip
+git clone https://github.com/dhard/skILMpy.git
+uv sync
+uv run ilm.py
+```
 After uv is installed, and this repository has been cloned to your system
 set your working directory accordingly. 
 
