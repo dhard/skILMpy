@@ -261,9 +261,9 @@ class AssociationMatrixLearner (_Learner):
 
     def vocabulary(self):
         """
-        Returns all meanings and optimal signals learned for them.
+        Returns all meanings sorted lexicographically and optimal signals learned for them.
         """        
-        thoughts = self.meaning_space.meanings()
+        thoughts = sorted(self.meaning_space.meanings())
         vocabulary = [ [thought, self.speak(thought, pick=False) ] for thought in thoughts ]
         return vocabulary
 
@@ -305,7 +305,7 @@ class AssociationMatrixLearner (_Learner):
 
     def compute_load(self):
         """
-        Calculates the functional load by signal position, the hamming distance of meanings induced by changes in each position
+        Calculates the functional load by signal position, the average hamming distance of meaning change induced by changes in each position of signal
         """
         #pdb.set_trace()
         load = [ 0 for _ in range(self.signal_space.length) ]
@@ -331,7 +331,7 @@ class AssociationMatrixLearner (_Learner):
         Calculates the symbol Shannon entropy of the vocabulary by signal position
         """
         #pdb.set_trace()
-        vocab = self.vocabulary()
+        entropy = [ 0 for _ in range(self.signal_space.length) ]
         for position in range(self.signal_space.length):
             comparisons = 0
             for meaning in meanings:
@@ -346,7 +346,7 @@ class AssociationMatrixLearner (_Learner):
                             comparisons    += 1
             load[position] /= comparisons
         #pdb.set_trace()
-        return load
+        return entropy
 
     def print_parameters(self):
         params = {'alpha':self.alpha, 'beta':self.beta, 'gamma':self.gamma, 'delta':self.delta}#, 'interactions": }
@@ -385,12 +385,25 @@ class AssociationMatrixLearner (_Learner):
             obs.append(self.compute_accuracy())
         if self.observables.show_load or self.observables.show_stats:            
             obs.extend(self.compute_load())
+#        if self.observables.show_entropy or self.observables.show_stats:            
+#            obs.extend(self.compute_entropy())
 
         if obs:
             print("stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width))
 
-        if self.observables.show_vocabulary:
+        if self.observables.show_vocab:
             print("vocabulary: ", self.vocabulary())
+
+    def print_stats(self):
+        obs = []
+        precision = self.observables.print_precision
+        width = precision + 8
+        obs.append(self.compute_compositionality())
+        obs.append(self.compute_accuracy())
+        obs.extend(self.compute_load())
+        obs.extend(self.compute_entropy())
+        print("stats: ",('{:>{width}f}'*(len(obs))).format(*obs,width=width))
+
 
 if __name__ == "__main__":
     import doctest

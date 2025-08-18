@@ -13,14 +13,18 @@ import pdb
 
 starttime = time.time()
 if __name__ == "__main__":
-    version = 0.2
+    version = 0.3
     prog = 'ilm'
     usage = '''usage: %prog [options] <SIGNAL-SPACE-PATTERN> <MEANING-SPACE-PATTERN> 
 
-Iterated Learning Models in Python (ILMpy) version 0.2
-Copyright (2018) David H. Ardell
+Smith-Kirby Iterated Learning Models in Python (skILMpy) version 0.3
+Copyright (2025) David H. Ardell
 All Wrongs Reversed.
-Please cite Ardell and Winter (2016) in published works using this software.
+Please cite Ardell, Andersson and Winter (2016) in published works using this software.
+https://evolang.org/neworleans/papers/165.html
+
+Changes:
+v0.3: implemented show-final-vocab, changed options, implemented entropy measure
 
 Usage:
 The meaning space size must be larger than the bottleneck size set by (-I INTERACTIONS)
@@ -61,19 +65,19 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
     parser.add_option("-a","--alpha",
 		      dest="alpha", type="float", default=1.0,
-		      help="set alpha \n Default: %default")
+		      help="set Smith-Kirby alpha \n Default: %default")
 
     parser.add_option("-b","--beta",
 		      dest="beta", type="float", default=0.0,
-		      help="set beta\n Default: %default")
+		      help="set Smith-Kirby beta\n Default: %default")
 
     parser.add_option("-g","--gamma",
 		      dest="gamma", type="float", default=-1.0,
-		      help="set gamma\n Default: %default")
+		      help="set Smith-Kirby gamma\n Default: %default")
 
     parser.add_option("-d","--delta",
 		      dest="delta", type="float", default=0.0,
-		      help="set delta\n Default: %default")
+		      help="set Smith-Kirby delta\n Default: %default")
 
     parser.add_option("-e","--noise",
 		      dest="noise", type="float", default=0.0,
@@ -81,7 +85,7 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
     parser.add_option("-c","--cost",
 		      dest="cost", type="float", default=0.0,
-		      help="set base misunderstanding cost function. Not yet implemented, now all meanings have equal cost. Default: %default")
+		      help="set base misunderstanding cost function. Not yet implemented, now all misunderstandings have equal cost. Default: %default")
 
     parser.add_option("-s","--seed", 
 		      dest="seed", type="int",  default=None,
@@ -95,15 +99,17 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 		      dest="precision", type="int",  default=4,
 		      help="set print precision for parameter printing. Default: %default")
 
-    parser.set_defaults(show_matrices=False, show_lessons=True, show_compositionality=False, show_accuracy=False, show_load=False, show_stats=False, show_vocabulary=False, show_final_vocabulary = False)
+    parser.set_defaults(show_matrices=False, show_lessons=True, show_compositionality=False, show_accuracy=False, show_load=False, show_entropy=False, show_stats=False,  show_final_stats=False, show_vocabulary=False, show_final_vocabulary = False)
     parser.add_option("--show-matrices", action="store_true", dest="show_matrices", help="print internal message-signal matrices at each iteration")
     parser.add_option("--no-show-lessons", action="store_false", dest="show_lessons", help="do not print the lessons passed to new agents at each iteration")
     parser.add_option("--show-compositionality", action="store_true", dest="show_compositionality", help="print compositionality at each iteration")
     parser.add_option("--show-accuracy", action="store_true", dest="show_accuracy", help="print communicative accuracy at each iteration")
     parser.add_option("--show-load", action="store_true", dest="show_load", help="print functional load by signal position at each iteration")
+    parser.add_option("--show-entropy", action="store_true", dest="show_entropy", help="print Shannon Entropy by signal position at each iteration")
     parser.add_option("--show-stats", action="store_true", dest="show_stats", help="print all statistics at each iteration")
-    parser.add_option("--show-vocabulary", action="store_true", dest="show_vocabulary", help="print the signal for each meaning at each iteration")
-    parser.add_option("--show-final-vocabulary", action="store_true", dest="show_final_vocabulary", help="print the signal for each meaning at the end of each chain")
+    parser.add_option("--show-final-stats", action="store_true", dest="show_final_stats", help="print all statistics at the end of each chain")
+    parser.add_option("--show-vocab", action="store_true", dest="show_vocab", help="print the signal for each meaning at each iteration")
+    parser.add_option("--show-final-vocab", action="store_true", dest="show_final_vocab", help="print the signal for each meaning at the end of each chain")
 
     myargv = sys.argv
     (options, args) = parser.parse_args()
@@ -133,8 +139,8 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
 
     observables = ilmpy.observables.Observables(show_matrices                  = options.show_matrices,
                                                 show_lessons                   = options.show_lessons,
-                                                show_vocabulary                = options.show_vocabulary,
-                                                show_final_vocabulary          = options.show_final_vocabulary,
+                                                show_vocab                     = options.show_vocab,
+                                                show_final_vocab               = options.show_final_vocab,
                                                 show_compositionality          = options.show_compositionality,
                                                 show_accuracy                  = options.show_accuracy,
                                                 show_load                      = options.show_load,
@@ -144,10 +150,12 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
     program_kwargs['observables'] = observables
                                                 
     print('# {:<3s} version {:3.1f}'.format(prog,version))
-    print('# Copyright (2016) David H. Ardell.')
+    print('# Copyright (2025) David H. Ardell.')
     print('# All Wrongs Reversed.')
     print('#')
-    print('# Please cite Ardell and Winter (2016) in published works using this software.')
+    print('# Smith-Kirby Iterated Learning Models in Python (skILMpy) version 0.3.')
+    print('# Please cite Ardell, Andersson and Winter (2016) in published works using this software.')
+    print('# https://evolang.org/neworleans/papers/165.html')
     print('#')
     print('# execution command:')
     print('# '+' '.join(myargv))
@@ -167,11 +175,14 @@ ilm "(([a-g]\[aeiou]):0.1)^2"   "{256}.(2)"  # any sound space can be powered
         for generation in range(options.num_generations):
             print('# Trial {} Iteration {}'.format(trial,generation))
             child = parent.spawn()
-            #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
             lessons = parent.teach(options.num_interactions)
             child.learn(lessons)
             child.print_observables()
             parent = child
+        if options.show_final_stats:
+            parent.print_stats()
+        if options.show_final_vocab:
+            print("# final vocabulary: ", parent.vocabulary())
         
 print("# Run time (minutes): ",round((time.time()-starttime)/60,3))
                     
