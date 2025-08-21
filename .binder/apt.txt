@@ -1,0 +1,11 @@
+# .binder/apt.txt
+# System packages for Binder
+build-essential
+gcc
+g++
+gfortran
+libblas-dev
+liblapack-dev
+vim
+htop
+

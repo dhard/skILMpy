@@ -1,0 +1,49 @@
+# .binder/environment.yml
+# Conda environment for Binder deployment
+# Updated: December 18, 2024
+
+name: skilmpy-binder
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python 3.14+ when available, fallback to 3.11+
+  - python>=3.11
+  
+  # Core scientific computing
+  - numpy>=2.0
+  - scipy>=1.14
+  - pandas>=2.2
+  - matplotlib>=3.8
+  - seaborn>=0.13
+  
+  # Jupyter ecosystem
+  - jupyterlab>=4.0
+  - jupyter>=1.0
+  - ipywidgets>=8.0
+  - voila>=0.5
+  
+  # Visualization
+  - plotly>=5.17
+  - bokeh>=3.3
+  
+  # Performance tools
+  - numba>=0.59
+  - cython>=3.0
+  
+  # Development tools
+  - git
+  - pip
+  
+  # Install via pip for latest versions
+  - pip:
+    - polars>=1.0.0
+    - lark>=1.2.0
+    - ply>=3.11
+    - sympy>=1.13
+    - joblib>=1.4
+    - memory-profiler
+    - line-profiler
+    - -e .
+

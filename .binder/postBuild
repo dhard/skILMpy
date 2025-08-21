@@ -1,0 +1,161 @@
+# .binder/postBuild
+#!/bin/bash
+# Post-build script for Binder setup
+
+set -euo pipefail
+
+echo "Setting up skILMpy for Binder..."
+
+# Configure environment for optimal performance
+export PYTHONGIL=0
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
+# Install skILMpy in development mode
+pip install -e ".[jupyter,performance]"
+
+# Configure skILMpy for interactive use
+python -c "
+import ilmpy
+try:
+    ilmpy.configure_for_hpc()
+    print('skILMpy configured successfully')
+except Exception as e:
+    print(f'Configuration warning: {e}')
+"
+
+# Install additional Jupyter extensions
+jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+jupyter labextension install plotlywidget --no-build
+jupyter labextension install jupyterlab-plotly --no-build
+jupyter lab build --dev-build=False --minimize=True
+
+# Set up example notebooks
+mkdir -p examples/binder
+cp examples/quickstart.ipynb examples/binder/
+cp examples/benchmarks.ipynb examples/binder/
+
+# Create a welcome notebook
+cat > examples/binder/Welcome.ipynb << 'EOF'
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Welcome to skILMpy 3.0! 🚀\n",
+    "\n",
+    "This is an interactive environment for exploring Smith-Kirby Iterated Learning Models.\n",
+    "\n",
+    "## Quick Start\n",
+    "\n",
+    "1. **[Quickstart Tutorial](quickstart.ipynb)** - Learn the basics in 10 minutes\n",
+    "2. **[Performance Benchmarks](benchmarks.ipynb)** - See the speed improvements\n",
+    "3. **[Research Examples](../research_examples/)** - Real-world applications\n",
+    "\n",
+    "## Try It Now!\n",
+    "\n",
+    "Run a simple simulation:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import ilmpy\n",
+    "from ilmpy.argument_parser import ModernILM_Parser\n",
+    "from ilmpy.learners import OptimizedAssociationMatrixLearner\n",
+    "\n",
+    "# Parse signal and meaning spaces\n",
+    "parser = ModernILM_Parser()\n",
+    "signal_space, meaning_space = parser.parse(\"[bp].[ao] (4).(3)\")\n",
+    "\n",
+    "print(f\"Signal space: {len(signal_space.signals())} signals\")\n",
+    "print(f\"Meaning space: {len(meaning_space.meanings())} meanings\")\n",
+    "print(f\"Signals: {signal_space.signals()[:10]}\")\n",
+    "print(f\"Meanings: {meaning_space.meanings()[:10]}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create and run a simple simulation\n",
+    "observables = ilmpy.create_observables(\n",
+    "    show_compositionality=True,\n",
+    "    show_accuracy=True,\n",
+    "    precision=4\n",
+    ")\n",
+    "\n",
+    "learner = OptimizedAssociationMatrixLearner(\n",
+    "    meaning_space, signal_space,\n",
+    "    alpha=1.0, beta=0.0, gamma=-1.0, delta=0.0,\n",
+    "    observables=observables\n",
+    ")\n",
+    "\n",
+    "# Run 5 generations\n",
+    "for generation in range(5):\n",
+    "    print(f\"\\nGeneration {generation}:\")\n",
+    "    child = learner.spawn()\n",
+    "    lessons = learner.teach(10)\n",
+    "    child.learn(lessons)\n",
+    "    \n",
+    "    # Print statistics\n",
+    "    comp = child.compute_compositionality()\n",
+    "    acc = child.compute_accuracy()\n",
+    "    print(f\"  Compositionality: {comp:.4f}\")\n",
+    "    print(f\"  Accuracy: {acc:.4f}\")\n",
+    "    \n",
+    "    learner = child\n",
+    "\n",
+    "print(\"\\nSimulation complete! 🎉\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Next Steps\n",
+    "\n",
+    "- Explore the other notebooks for more advanced examples\n",
+    "- Try different signal and meaning space configurations\n",
+    "- Experiment with the model parameters (alpha, beta, gamma, delta)\n",
+    "- Check out the [GitHub repository](https://github.com/dhard/skILMpy) for full documentation\n",
+    "\n",
+    "Happy modeling! 🧬🔬"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+EOF
+
+echo "Binder setup complete!"
+
+# Set default working directory
+echo 'cd $HOME' >> ~/.bashrc
+
