@@ -8,6 +8,25 @@
 [![Build Status](https://github.com/dhard/skILMpy/workflows/CI/badge.svg)](https://github.com/dhard/skILMpy/actions)
 [![Docker](https://img.shields.io/badge/docker-available-blue)](https://hub.docker.com/r/dhard/skilmpy)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dhard/skILMpy/main?labpath=examples%2Fquickstart.ipynb)
+=======
+Installation
+============================================
+It is recommended to install all dependencies and run skILMpy with uv. 
+Instructions for downloading uv can be found here: https://docs.astral.sh/uv/ but in brief, see below
+
+```
+pip install uv
+pip install --upgrade pip
+git clone https://github.com/dhard/skILMpy.git
+uv sync
+uv run ilm.py
+```
+After uv is installed, and this repository has been cloned to your system
+set your working directory accordingly. 
+
+
+
+In the directory for skILMpy on your system run `uv sync`, in order to install all the required dependencies. Followed by `uv run ilm.py` to run the program.
 
 ---
 
