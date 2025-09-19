@@ -9,10 +9,10 @@ channels:
 
 dependencies:
   # Python 3.14+ when available, fallback to 3.11+
-  - python>=3.11
+  - python=3.11
   
   # Core scientific computing
-  - numpy>=2.0
+  - numpy=2.0
   - scipy>=1.14
   - pandas>=2.2
   - matplotlib>=3.8
@@ -45,5 +45,5 @@ dependencies:
     - joblib>=1.4
     - memory-profiler
     - line-profiler
-    - -e .
+    - git+https://github.com/dhard/skILMpy.git
 
