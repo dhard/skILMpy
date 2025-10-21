@@ -1,24 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
 [project]
-name = "ilm"
-version = "2.0"
-description = "Dave's ILM"
+# Distribution name can be "skilmpy" even if import is "ilmpy"
+name = "skilmpy"
+version = "2.5.0"
+description = "Smith–Kirby Iterated Learning Models"
 readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11,<3.13"
 
-requires-python = "==3.11.6"
-
-
-
-
+# Keep conservative deps for now. You can lift NumPy to 2.x after tests pass.
 dependencies = [
-	"numpy ==1.26.4",
-	"pandas >=1.2",
-
-	"sympy ==1.13",
-	"ply ==3.11",
-	"Distance ==0.1.3",
-
+  "numpy>=1.26,<2.1",
+  "pandas>=1.2",
+  "sympy==1.13",
+  "ply==3.11",
+  "Distance==0.1.3"
 ]
 
 [project.optional-dependencies]
-extra = [
+performance = [
+  "numba>=0.60,<1.0",
+  "joblib>=1.4,<2.0"
 ]
+dev = [
+  "pytest>=8",
+  "pytest-benchmark>=4",
+  "black>=24",
+  "ruff>=0.5"
+]
+
+[tool.hatch.build.targets.wheel]
+# This line fixes your error: explicitly ship the "ilmpy" package directory
+packages = ["ilmpy"]
+
+[tool.hatch.build.targets.sdist]
+include = ["ilmpy", "README.md", "LICENSE", "pyproject.toml"]
