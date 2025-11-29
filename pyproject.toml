@@ -1,24 +1,291 @@
+# skILMpy 3.0 - Modern Python Build Configuration
+# Updated: December 18, 2024
+# Python 3.14+ with free-threading support for HPC environments
+
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
 [project]
-name = "ilm"
-version = "2.0"
-description = "Dave's ILM"
+name = "skilmpy"
+version = "3.0.0"
+description = "Generalized Smith-Kirby Iterated Learning Models in Python with HPC optimization"
 readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "David H. Ardell", email = "dhard@ucmerced.edu"}
+]
+maintainers = [
+    {name = "David H. Ardell", email = "dhard@ucmerced.edu"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Natural Language :: English",
+]
+keywords = [
+    "linguistics", 
+    "evolution", 
+    "learning", 
+    "simulation", 
+    "iterated-learning",
+    "smith-kirby",
+    "language-evolution",
+    "computational-linguistics",
+    "hpc",
+    "parallel-computing"
+]
 
-requires-python = "==3.11.6"
+# PYTHON 3.14+ REQUIREMENT for free-threading support
+requires-python = ">=3.14"
 
-
-
-
+# CORE DEPENDENCIES - Optimized for performance and HPC compatibility
 dependencies = [
-	"numpy ==1.26.4",
-	"pandas >=1.2",
-
-	"sympy ==1.13",
-	"ply ==3.11",
-	"Distance ==0.1.3",
-
+    # Core scientific computing - latest optimized versions
+    "numpy>=2.0.0,<3.0",                    # NumPy 2.x for 20-50% performance improvement
+    "scipy>=1.14.0,<2.0",                   # Hardware-optimized scientific algorithms
+    
+    # Data manipulation - modern high-performance alternatives
+    "polars>=1.0.0,<2.0",                   # 10-100x faster than pandas for large datasets
+    "pandas>=2.2.0,<3.0",                   # Keep for backward compatibility
+    
+    # Mathematical computation
+    "sympy>=1.13.0,<2.0",                   # Symbolic mathematics (stable API)
+    
+    # Parsing - modern parser generators
+    "lark>=1.2.0,<2.0",                     # Modern, fast parser (alternative to PLY)
+    "ply>=3.11,<4.0",                       # Keep for backward compatibility if needed
+    
+    # Distance metrics - prefer scipy.spatial.distance over Distance package
+    # Note: 'Distance' package removed in favor of scipy (more maintained, faster)
+    
+    # Performance acceleration - optional but recommended for HPC
+    "numba>=0.60.0,<1.0; python_version>='3.14'",    # JIT compilation for hot loops
+    "joblib>=1.4.0,<2.0",                            # Parallel computing utilities
 ]
 
+# OPTIONAL DEPENDENCIES for different use cases
 [project.optional-dependencies]
-extra = [
+
+# Performance extras - maximize computational speed
+performance = [
+    "numba>=0.60.0,<1.0",                   # JIT compilation
+    "cython>=3.0.0,<4.0",                   # C extensions
+    "bottleneck>=1.3.0,<2.0",               # Fast NumPy array functions
+    "numexpr>=2.10.0,<3.0",                 # Fast numerical expressions
 ]
+
+# GPU acceleration - for CUDA-capable systems
+gpu = [
+    "cupy>=13.0.0,<14.0",                   # GPU-accelerated NumPy
+    "numba[cuda]>=0.60.0,<1.0",             # GPU JIT compilation
+]
+
+# High-performance alternative to core dependencies  
+hpc = [
+    "polars[all]>=1.0.0,<2.0",              # All polars features
+    "pyarrow>=15.0.0,<16.0",                # Fast columnar data processing
+    "fastparquet>=2024.2.0",                # Fast parquet I/O
+]
+
+# Development tools - code quality and testing
+dev = [
+    "pytest>=8.0.0,<9.0",                   # Testing framework
+    "pytest-benchmark>=4.0.0,<5.0",         # Performance benchmarking
+    "pytest-cov>=5.0.0,<6.0",               # Coverage reporting
+    "pytest-xdist>=3.6.0,<4.0",             # Parallel test execution
+    "black>=24.0.0,<25.0",                  # Code formatting
+    "ruff>=0.6.0,<1.0",                     # Fast linting and formatting
+    "mypy>=1.11.0,<2.0",                    # Static type checking
+    "pre-commit>=3.8.0,<4.0",               # Git hooks for code quality
+    "isort>=5.13.0,<6.0",                   # Import sorting
+]
+
+# Documentation generation
+docs = [
+    "sphinx>=7.0.0,<8.0",                   # Documentation generator
+    "sphinx-rtd-theme>=2.0.0,<3.0",         # ReadTheDocs theme
+    "myst-parser>=3.0.0,<4.0",              # Markdown parser for Sphinx
+    "sphinx-autodoc-typehints>=2.0.0,<3.0", # Type hint documentation
+    "nbsphinx>=0.9.0,<1.0",                 # Jupyter notebook integration
+]
+
+# Jupyter notebook support for interactive analysis
+jupyter = [
+    "jupyter>=1.0.0,<2.0",                  # Jupyter metapackage
+    "ipywidgets>=8.0.0,<9.0",               # Interactive widgets
+    "matplotlib>=3.8.0,<4.0",               # Plotting
+    "seaborn>=0.13.0,<1.0",                 # Statistical visualization
+]
+
+# All optional dependencies combined
+all = [
+    "skilmpy[performance,hpc,dev,docs,jupyter]"
+]
+
+# Minimal set for HPC clusters (no dev tools)
+cluster = [
+    "skilmpy[performance,hpc]"
+]
+
+[project.urls]
+Homepage = "https://github.com/dhard/skILMpy"
+Repository = "https://github.com/dhard/skILMpy"
+Issues = "https://github.com/dhard/skILMpy/issues"
+Documentation = "https://github.com/dhard/skILMpy#readme"
+Changelog = "https://github.com/dhard/skILMpy/blob/main/CHANGELOG.md"
+
+[project.scripts]
+ilm = "ilmpy.cli:main"                      # Main CLI entry point
+skilmpy = "ilmpy.cli:main"                  # Alternative name
+
+# Build configuration
+[tool.hatch.version]
+path = "ilmpy/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ilmpy"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/ilmpy",
+    "/tests",
+    "/docs",
+    "/examples",
+    "/scripts",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+]
+
+# MODERN PYTHON TOOLING CONFIGURATION (Updated December 18, 2024)
+
+[tool.black]
+target-version = ["py314"]                 # Python 3.14+ formatting
+line-length = 100                          # Reasonable line length for modern screens
+skip-string-normalization = true           # Preserve quote style
+preview = true                             # Enable latest formatting features
+
+[tool.ruff]
+target-version = "py314"                   # Python 3.14+ linting
+line-length = 100
+fix = true                                 # Auto-fix when possible
+
+# Enable comprehensive rule set for high code quality
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings  
+    "F",      # pyflakes
+    "I",      # isort imports
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade (modern Python syntax)
+    "RUF",    # ruff-specific rules
+    "N",      # PEP8 naming
+    "S",      # bandit security
+    "T20",    # flake8-print (avoid print statements)
+    "PL",     # pylint
+    "PIE",    # flake8-pie
+    "SIM",    # flake8-simplify
+]
+
+ignore = [
+    "E501",   # line too long (handled by black)
+    "B008",   # do not perform function calls in argument defaults
+    "S101",   # use of assert (OK in test files)
+    "PLR0913", # too many arguments (sometimes necessary)
+    "T201",   # print found (OK for CLI output)
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]                   # Allow unused imports in __init__.py
+"tests/*" = ["S101", "PLR2004"]           # Allow asserts and magic values in tests
+
+[tool.ruff.isort]
+force-single-line = false
+known-first-party = ["ilmpy"]
+
+# TYPE CHECKING CONFIGURATION
+[tool.mypy]
+python_version = "3.14"                   # Target Python 3.14
+strict = true                             # Enable all strict options
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+namespace_packages = true
+
+# Handle third-party libraries without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "ply.*",
+    "distance.*",
+    "sympy.*",
+    "numba.*",
+]
+ignore_missing_imports = true
+
+# TESTING CONFIGURATION
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = [
+    "-ra",                                 # Show all test results
+    "-q",                                  # Quiet output
+    "--strict-markers",                    # Strict marker checking
+    "--strict-config",                     # Strict config checking
+    "--cov=ilmpy",                         # Coverage reporting
+    "--cov-report=term-missing",           # Show missing coverage
+    "--cov-report=html:htmlcov",           # HTML coverage report
+    "--benchmark-disable",                 # Disable benchmarks by default
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Test markers for categorization
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "benchmark: marks tests as performance benchmarks",
+    "gpu: marks tests requiring GPU",
+    "parallel: marks tests for parallel execution",
+]
+
+# COVERAGE CONFIGURATION
+[tool.coverage.run]
+source = ["ilmpy"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/.*",
+]
+parallel = true                            # Support parallel test execution
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+show_missing = true
+precision = 2

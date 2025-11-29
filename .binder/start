@@ -1,0 +1,5 @@
+# .binder/start
+#!/bin/bash
+# Custom start script for Binder
+
+exec "$@"
